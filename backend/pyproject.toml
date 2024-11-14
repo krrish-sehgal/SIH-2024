@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "backend"
+version = "0.1.0"
+description = ""
+authors = ["Krrish Sehgal <133865424+krrish-sehgal@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^5.1.3"
+djangorestframework = "^3.15.2"
+django-cors-headers = "^4.6.0"
+cryptography = "^43.0.3"
+celery = {extras = ["redis"], version = "^5.4.0"}
+redis = "^5.2.0"
+django-celery-beat = "^2.7.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
