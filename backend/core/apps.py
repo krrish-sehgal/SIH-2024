@@ -1,4 +1,8 @@
+# core/apps.py
+
 from django.apps import AppConfig
+from django.db.models.signals import post_migrate
+from .tasks import encrypt_model_if_needed
 
 
 class CoreConfig(AppConfig):
@@ -6,10 +10,13 @@ class CoreConfig(AppConfig):
     name = "core"
 
     def ready(self):
-        # Import the task function
-        from .tasks import encrypt_model_if_needed
-        
-        # Run the function immediately on startup
+        post_migrate.connect(run_encryption_on_startup, sender=self)
         encrypt_model_if_needed()
 
+
+def run_encryption_on_startup(sender, **kwargs):
+    """
+    A helper function that will run encrypt_model_if_needed after Django has finished migrating.
+    """
+    print("In run_encryption_on_startup function")
 

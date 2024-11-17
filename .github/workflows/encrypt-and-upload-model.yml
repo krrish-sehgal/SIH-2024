@@ -1,0 +1,51 @@
+name: Encrypt and Upload Model
+
+on:
+  push:
+    paths:
+      - models/** # Trigger workflow when files in the models folder change
+
+jobs:
+  upload-model:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Install AWS CLI
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      # Step 3: Configure AWS credentials
+      - name: Configure AWS credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+          aws configure set region $AWS_REGION
+
+      # Step 4: Encrypt the model using AWS KMS
+      - name: Encrypt model
+        run: |
+          MODEL_FILE=$(find models -type f) # Find the model file in the models folder
+          ENCRYPTED_FILE="${MODEL_FILE}.encrypted"
+          aws kms encrypt \
+            --key-id ${{ secrets.KMS_KEY_ID }} \
+            --plaintext fileb://$MODEL_FILE \
+            --output text \
+            --query CiphertextBlob \
+            > $ENCRYPTED_FILE
+
+      # Step 5: Upload encrypted model to S3
+      - name: Upload to S3
+        run: |
+          MODEL_FILE=$(find models -type f)
+          ENCRYPTED_FILE="${MODEL_FILE}.encrypted"
+          aws s3 cp $ENCRYPTED_FILE s3://${{ secrets.S3_BUCKET_NAME }}/encrypted_models/$(basename $ENCRYPTED_FILE)
