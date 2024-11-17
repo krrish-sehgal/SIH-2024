@@ -9,7 +9,7 @@ async function fetchEncryptedFilesFromS3(modelKey) {
     // Fetch the encrypted model file from S3
     const modelFileParams = {
       Bucket: bucketName,
-      Key: `${modelKey}.enc`, // Assuming the model file is saved with '.enc' extension
+      Key: `${modelKey}`, // Assuming the model file is saved with '.enc' extension
     };
 
     const modelFile = await s3.getObject(modelFileParams).promise();
