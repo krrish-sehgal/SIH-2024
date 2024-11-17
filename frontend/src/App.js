@@ -150,6 +150,85 @@ function App() {
       throw error; // Re-throw to be caught by loadModel
     }
   };
+//   const fetchEncryptedModel = async (publicKey) => {
+//     try {
+//         const publicKeyBase64 = arrayBufferToBase64(publicKey);
+//         console.log("Sending public key:", publicKeyBase64.substring(0, 64) + "...");
+
+//         // Add artificial delay to ensure smooth loading animation (optional, remove in production)
+//         await new Promise(resolve => setTimeout(resolve, 500));
+
+//         const response = await fetch("http://localhost:8000/api/get-encrypted-model", {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json",
+//             },
+//             body: JSON.stringify({
+//                 publicKey: publicKeyBase64,
+//             }),
+//         });
+
+//         if (!response.ok) {
+//             throw new Error(`HTTP error! status: ${response.status}`);
+//         }
+
+//         const data = await response.json();
+//         console.log("Received encrypted data lengths:", {
+//             modelLength: data.encryptedModel?.length,
+//             keyLength: data.encryptedAesKey?.length,
+//             ivLength: data.iv?.length,
+//         });
+
+//         if (data.encryptedModel && data.encryptedAesKey && data.iv) {
+//             // Step 1: Decrypt the AES key using the user's private key
+//             const decryptedAesKey = decryptAesKey(data.encryptedAesKey);
+
+//             // Step 2: Decrypt the model using the decrypted AES key
+//             const decryptedModel = decryptModelWithAesKey(data.encryptedModel, decryptedAesKey, data.iv);
+
+//             // Step 3: Generate hash of the decrypted model
+//             const modelHash = generateModelHash(decryptedModel);
+
+//             // Step 4: Verify the digital signature with the backend public key
+//             const isValidSignature = await verifySignedHash(modelHash, data.signedHash);
+//             if (!isValidSignature) {
+//                 throw new Error("Invalid signature: Model integrity check failed");
+//             }
+
+//             // Step 5: Compare the generated hash with the received model hash
+//             if (modelHash !== data.modelHash) {
+//                 throw new Error("Model hash mismatch: The model may have been tampered with.");
+//             }
+
+//             console.log("Model verified successfully, loading model...");
+//             loadModel(decryptedModel);
+//         } else {
+//             throw new Error("Failed to fetch encrypted model: " + (data.message || "Unknown error"));
+//         }
+//     } catch (error) {
+//         console.error("Error fetching encrypted model:", error);
+//         throw error; // Re-throw to be caught by loadModel
+//     }
+// };
+
+
+// Helper function to verify the signed hash
+async function verifySignedHash(modelHash, signedHash) {
+    const response = await fetch("http://localhost:8000/api/verify-signature", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            modelHash: modelHash,
+            signedHash: signedHash,
+        }),
+    });
+
+    const data = await response.json();
+    return data.isValid;  // true/false based on verification result
+}
+
 
   // Helper function to store the private key securely in IndexedDB
   const storeKeyInIndexedDB = async (keyName, keyData) => {
