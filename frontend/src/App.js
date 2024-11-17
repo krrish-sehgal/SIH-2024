@@ -1,44 +1,50 @@
 import React, { useState } from "react";
-import { ShieldCheckIcon, KeyIcon, CloudArrowDownIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import {
+  ShieldCheckIcon,
+  KeyIcon,
+  CloudArrowDownIcon,
+  LockClosedIcon,
+} from "@heroicons/react/24/outline";
 
 function App() {
-  const [publicKey, setPublicKey] = useState(null);
-  const [encryptedModel, setEncryptedModel] = useState(null);
-  const [encryptedAesKey, setEncryptedAesKey] = useState(null);
-  const [iv, setIv] = useState(null); // Initialization Vector
-  const [modelLoaded, setModelLoaded] = useState(false);
-  const [decryptedModel, setDecryptedModel] = useState(""); // State for storing decrypted model
-  const [decryptedModelBuffer, setDecryptedModelBuffer] = useState(null); // Add new state for storing decrypted model buffer
+  // State variables for managing keys, model data, and UI loading states
+  const [publicKey, setPublicKey] = useState(null); // Stores the public RSA key
+  const [encryptedModel, setEncryptedModel] = useState(null); // Encrypted ML model data
+  const [encryptedAesKey, setEncryptedAesKey] = useState(null); // Encrypted AES key
+  const [iv, setIv] = useState(null); // Initialization Vector for AES decryption
+  const [modelLoaded, setModelLoaded] = useState(false); // Flag to indicate model is loaded
+  const [decryptedModelBuffer, setDecryptedModelBuffer] = useState(null); // Buffer for decrypted model
+
+  // Loading indicators for UI feedback during asynchronous operations
   const [isGeneratingKeys, setIsGeneratingKeys] = useState(false);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Generate Key Pair and securely store the private key in IndexedDB
+  // Function to generate RSA key pair and securely store the private key
   const generateKeyPair = async () => {
     setIsGeneratingKeys(true);
     try {
+      // Generate an RSA key pair for encryption and decryption
       const keyPair = await window.crypto.subtle.generateKey(
         {
           name: "RSA-OAEP",
           modulusLength: 2048,
           publicExponent: new Uint8Array([1, 0, 1]),
-          hash: { name: "SHA-256" },  // Changed to object format
+          hash: { name: "SHA-256" },
         },
-        true, // Set extractable to true
-        ["encrypt", "decrypt"]
+        true, // Keys can be exported (extractable)
+        ["encrypt", "decrypt"] // Key usages
       );
 
-      // Export the private key for storage
+      // Export the private key and store it securely in IndexedDB
       const exportedPrivateKey = await window.crypto.subtle.exportKey(
         "pkcs8",
         keyPair.privateKey
       );
-
-      // Store the exported private key
       await storeKeyInIndexedDB("privateKey", exportedPrivateKey);
 
-      // Export the public key for UI display
+      // Export the public key and update state to send it to the backend
       const exportedPublicKey = await window.crypto.subtle.exportKey(
         "spki",
         keyPair.publicKey
@@ -53,7 +59,54 @@ function App() {
     }
   };
 
-  // Send the public key to the backend to get the encrypted model
+  // Function to fetch the encrypted model from the backend using the public key
+  const loadModel = async () => {
+    setIsLoadingModel(true);
+    try {
+      if (!publicKey) {
+        throw new Error("Please generate key pair first!");
+      }
+
+      // Fetch encrypted model data from the backend
+      await fetchEncryptedModel(publicKey);
+      setModelLoaded(true);
+    } catch (error) {
+      console.error("Error loading model:", error);
+    } finally {
+      setIsLoadingModel(false);
+    }
+  };
+
+  // Function to decrypt the model using the private key and AES decryption
+  const decryptModel = async () => {
+    setIsDecrypting(true);
+    try {
+      console.log("Decrypting model...");
+
+      // Retrieve the private key from IndexedDB
+      const privateKey = await getKeyFromIndexedDB("privateKey");
+      if (!privateKey) {
+        console.error("Private key not found!");
+        return;
+      }
+
+      // Decrypt the AES key using the private RSA key
+      const aesKey = await decryptAesKey(privateKey, encryptedAesKey);
+
+      // Decrypt the model using the decrypted AES key and IV
+      const decryptedBuffer = await decryptWithAes(aesKey, encryptedModel, iv);
+
+      // Update state with the decrypted model buffer
+      setDecryptedModelBuffer(decryptedBuffer);
+      console.log("Model decrypted successfully!");
+    } catch (error) {
+      console.error("Error decrypting model:", error);
+    } finally {
+      setIsDecrypting(false);
+    }
+  };
+
+  // Function to fetch encrypted model data from the backend
   const fetchEncryptedModel = async (publicKey) => {
     try {
       const publicKeyBase64 = arrayBufferToBase64(publicKey);
@@ -98,24 +151,7 @@ function App() {
     }
   };
 
-  const loadModel = async () => {
-    setIsLoadingModel(true);
-    try {
-      if (!publicKey) {
-        throw new Error("Please generate key pair first!");
-      }
-
-      await fetchEncryptedModel(publicKey);
-      setModelLoaded(true);
-    } catch (error) {
-      console.error("Error loading model:", error);
-      // You might want to show an error message to the user here
-    } finally {
-      setIsLoadingModel(false);
-    }
-  };
-
-  // Store key securely in IndexedDB
+  // Helper function to store the private key securely in IndexedDB
   const storeKeyInIndexedDB = async (keyName, keyData) => {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open("SecureKeysDB", 1);
@@ -141,7 +177,7 @@ function App() {
     });
   };
 
-  // Retrieve key from IndexedDB
+  // Helper function to retrieve the private key from IndexedDB
   const getKeyFromIndexedDB = async (keyName) => {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open("SecureKeysDB", 1);
@@ -173,40 +209,7 @@ function App() {
     });
   };
 
-  // Decrypt the model using the private key from IndexedDB and AES
-  const decryptModel = async () => {
-    setIsDecrypting(true);
-    try {
-      console.log("Decrypting model...");
-
-      // Retrieve the private key from IndexedDB
-      const privateKey = await getKeyFromIndexedDB("privateKey");
-      if (!privateKey) {
-        console.error("Private key not found!");
-        return;
-      }
-
-      // Decrypt the AES key using the private RSA key
-      const aesKey = await decryptAesKey(privateKey, encryptedAesKey);
-
-      console.log("AES Key decrypted:", aesKey);
-
-      // Decrypt the model using the decrypted AES key and IV
-      const decryptedModelBuffer = await decryptWithAes(aesKey, encryptedModel, iv);
-      console.log("Model decrypted successfully!");
-
-      // Update the state to store the decrypted model
-      setDecryptedModelBuffer(decryptedModelBuffer);
-      setDecryptedModel(`Model decrypted successfully`);
-    } catch (error) {
-      console.error("Error decrypting model:", error);
-      setDecryptedModel("Error: Failed to decrypt model");
-    } finally {
-      setIsDecrypting(false);
-    }
-  };
-
-  // Decrypt the AES key using the RSA private key
+  // Function to decrypt the AES key using the RSA private key
   const decryptAesKey = async (privateKey, encryptedAesKeyBase64) => {
     try {
       console.log("Starting AES key decryption...");
@@ -255,7 +258,7 @@ function App() {
     }
   };
 
-  // Decrypt the model using the AES key and IV
+  // Function to decrypt the model data using the AES key and IV
   const decryptWithAes = async (aesKey, encryptedModelBase64, ivBase64) => {
     try {
       console.log("Decrypting model with AES...");
@@ -288,7 +291,38 @@ function App() {
     }
   };
 
-  // Helper functions for downloading models
+  // Utility functions for data conversion between ArrayBuffer and Base64
+  const arrayBufferToBase64 = (buffer) => {
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  };
+
+  const base64ToArrayBuffer = (base64) => {
+    try {
+      const binaryString = window.atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < bytes.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    } catch (error) {
+      console.error("Error in base64ToArrayBuffer:", error);
+      throw new Error("Invalid base64 string");
+    }
+  };
+
+  // Function to format file sizes in a human-readable format
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' bytes';
+    else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    else return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
+
+  // Functions to handle downloading of encrypted and decrypted models
   const downloadDecryptedModel = async () => {
     setIsDownloading(true);
     try {
@@ -325,39 +359,7 @@ function App() {
     }
   };
 
-  // Helper function: Convert ArrayBuffer to Base64 for display
-  const arrayBufferToBase64 = (buffer) => {
-    let binary = "";
-    const bytes = new Uint8Array(buffer);
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
-  };
-
-  // Helper function: Convert Base64 to ArrayBuffer
-  const base64ToArrayBuffer = (base64) => {
-    try {
-      const binaryString = window.atob(base64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < bytes.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      return bytes.buffer;
-    } catch (error) {
-      console.error("Error in base64ToArrayBuffer:", error);
-      throw new Error("Invalid base64 string");
-    }
-  };
-
-  // Add this helper function for formatting file sizes
-  const formatFileSize = (bytes) => {
-    if (bytes < 1024) return bytes + ' bytes';
-    else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-    else return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-  };
-
-  // Add this new loading spinner component
+  // Component for displaying a loading spinner during asynchronous operations
   const LoadingSpinner = () => (
     <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -369,6 +371,7 @@ function App() {
     </svg>
   );
 
+  // Main component rendering the application UI
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -506,37 +509,35 @@ function App() {
           )}
 
           {/* Decrypted Model Section */}
-          {decryptedModel && (
+          {decryptedModelBuffer && (
             <div className="card">
               <h2 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
                 <ShieldCheckIcon className="w-6 h-6 mr-2 text-green-600" />
                 Decrypted Model Status
               </h2>
 
-              {decryptedModelBuffer && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                  <p className="text-green-700">
-                    Model successfully decrypted! Size: {formatFileSize(decryptedModelBuffer.byteLength)}
-                  </p>
-                  <button
-                    onClick={downloadDecryptedModel}
-                    className="btn-primary mt-3 flex items-center justify-center"
-                    disabled={isDownloading}
-                  >
-                    {isDownloading ? (
-                      <>
-                        <LoadingSpinner />
-                        Downloading...
-                      </>
-                    ) : (
-                      <>
-                        <CloudArrowDownIcon className="w-5 h-5 inline mr-2" />
-                        Download Decrypted Model
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                <p className="text-green-700">
+                  Model successfully decrypted! Size: {formatFileSize(decryptedModelBuffer.byteLength)}
+                </p>
+                <button
+                  onClick={downloadDecryptedModel}
+                  className="btn-primary mt-3 flex items-center justify-center"
+                  disabled={isDownloading}
+                >
+                  {isDownloading ? (
+                    <>
+                      <LoadingSpinner />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <CloudArrowDownIcon className="w-5 h-5 inline mr-2" />
+                      Download Decrypted Model
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>
