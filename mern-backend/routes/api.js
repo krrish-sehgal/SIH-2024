@@ -1,8 +1,8 @@
-const express = require('express');
-const { getEncryptedModel } = require('../controllers/modelController');
+const express = require("express");
+const { getAllEncryptedModels } = require("../controllers/modelController.js");
 
 const router = express.Router();
 
-router.get('/get-encrypted-model', getEncryptedModel);
+router.get("/get-encrypted-model", getAllEncryptedModels);
 
 module.exports = router;
