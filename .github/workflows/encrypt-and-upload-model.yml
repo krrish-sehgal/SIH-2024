@@ -1,51 +1,42 @@
-name: Encrypt and Upload Model
+name: Model Upload and Encrypt
 
 on:
   push:
     paths:
-      - models/** # Trigger workflow when files in the models folder change
+      - "models/**" # Trigger on any file changes in the 'models' directory
+    branches:
+      - main # Trigger on the 'main' branch, or use your desired branch
 
 jobs:
-  upload-model:
+  upload_model:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repo
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Install AWS CLI
-      - name: Install AWS CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # Securely use the secret key
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # Securely use the secret key
+          aws-region: ${{ secrets.AWS_REGION }} # Use the region stored in the secret
 
-      # Step 3: Configure AWS credentials
-      - name: Configure AWS credentials
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+      - name: Find model file
+        id: find_model
         run: |
-          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-          aws configure set region $AWS_REGION
-
-      # Step 4: Encrypt the model using AWS KMS
-      - name: Encrypt model
-        run: |
-          MODEL_FILE=$(find models -type f) # Find the model file in the models folder
-          ENCRYPTED_FILE="${MODEL_FILE}.encrypted"
-          aws kms encrypt \
-            --key-id ${{ secrets.KMS_KEY_ID }} \
-            --plaintext fileb://$MODEL_FILE \
-            --output text \
-            --query CiphertextBlob \
-            > $ENCRYPTED_FILE
-
-      # Step 5: Upload encrypted model to S3
-      - name: Upload to S3
-        run: |
+          # Find the model file in the models directory
           MODEL_FILE=$(find models -type f)
-          ENCRYPTED_FILE="${MODEL_FILE}.encrypted"
-          aws s3 cp $ENCRYPTED_FILE s3://${{ secrets.S3_BUCKET_NAME }}/encrypted_models/$(basename $ENCRYPTED_FILE)
+          echo "Model file found: $MODEL_FILE"
+          echo "::set-output name=model_file::$MODEL_FILE"
+
+      - name: Upload and encrypt the model to S3
+        run: |
+          # Variables
+          MODEL_FILE="${{ steps.find_model.outputs.model_file }}"  # Model file found in previous step
+          S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}"  # Use the secret for the bucket name
+          KMS_KEY_ID="${{ secrets.KMS_KEY_ID }}"  # Use the secret for the KMS key ID
+
+          # Upload the model to S3 with encryption using the KMS key
+          aws s3 cp $MODEL_FILE s3://$S3_BUCKET_NAME/ --sse aws:kms --sse-kms-key-id $KMS_KEY_ID
+          echo "Model uploaded and encrypted with KMS."
