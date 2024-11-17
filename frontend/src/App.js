@@ -265,44 +265,83 @@ function App() {
       throw error;  // Re-throw to maintain error chain
     }
   };
+
   async function fetchPublicVerificationKey() {
-    // Fetch the PEM formatted public key from the server
-    const response = await fetch('http://localhost:8000/api/public-verification-key');
-    if (!response.ok) {
-        throw new Error("Failed to fetch public key.");
-    }
-
-    const publicKeyPem = await response.text(); // Assuming the public key is returned as PEM format
-
-    // Import the PEM formatted public key into a CryptoKey object
-    const publicKey = await importPublicKey(publicKeyPem);
-
-    return publicKey; // Return the imported CryptoKey object
-}
-
-async function importPublicKey(pemKey) {
-    // Remove the "BEGIN" and "END" parts of the PEM string and decode the base64
-    const keyParts = pemKey.replace(/-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\n/g, '');
-    const keyBytes = Uint8Array.from(atob(keyParts), c => c.charCodeAt(0));
-
     try {
-        const importedKey = await crypto.subtle.importKey(
-            "spki", // Format for public keys
-            keyBytes,
-            {
-                name: "RSA-OAEP", // Algorithm name (or you can use another algorithm, depending on your use case)
-                hash: { name: "SHA-256" }
-            },
-            true, // Extractable
-            ["verify"] // The operations the key will be used for
-        );
-        return importedKey;
+      const response = await fetch('http://localhost:8000/api/public-verification-key');
+      if (!response.ok) {
+        throw new Error("Failed to fetch public key.");
+      }
+      const data = await response.json();
+      console.log("Received public key data:", data); // Debug log
+      return await importPublicKey(data.publicKey);
     } catch (error) {
-        console.error("Error importing public key:", error);
-        throw new Error("Failed to import public key.");
+      console.error("Error fetching public key:", error);
+      throw error;
     }
-}
+  }
 
+  async function importPublicKey(pemKey) {
+    try {
+      if (!pemKey) {
+        throw new Error("PEM key is undefined or null");
+      }
+
+      // Clean the PEM key
+      const pemContents = pemKey
+        .replace('-----BEGIN PUBLIC KEY-----', '')
+        .replace('-----END PUBLIC KEY-----', '')
+        .replace(/[\r\n]+/g, '')
+        .trim();
+
+      console.log("Cleaned PEM contents length:", pemContents.length); // Debug log
+
+      // Convert from base64 to binary
+      const binaryString = window.atob(pemContents);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      // Import the key
+      return await window.crypto.subtle.importKey(
+        'spki',
+        bytes.buffer,
+        {
+          name: 'RSASSA-PKCS1-v1_5',
+          hash: { name: 'SHA-256' },
+        },
+        true,
+        ['verify']
+      );
+    } catch (error) {
+      console.error("Error importing public key:", error);
+      console.error("PEM key received:", pemKey);
+      throw error;
+    }
+  }
+
+  async function verifySignedHash(originalHash, signedHash, publicKey) {
+    try {
+      // Convert the signed hash from base64
+      const signatureBytes = new Uint8Array(atob(signedHash).split('').map(c => c.charCodeAt(0)));
+
+      // Convert the original hash from hex to ArrayBuffer
+      const messageBytes = new Uint8Array(originalHash.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+
+      return await window.crypto.subtle.verify(
+        {
+          name: 'RSASSA-PKCS1-v1_5',
+        },
+        publicKey,
+        signatureBytes,
+        messageBytes
+      );
+    } catch (error) {
+      console.error("Error verifying hash:", error);
+      return false;
+    }
+  }
 
   // Function to decrypt the model data using the AES key and IV
   const decryptWithAes = async (aesKey, encryptedModelBase64, ivBase64) => {
@@ -325,19 +364,19 @@ async function importPublicKey(pemKey) {
         aesKey,
         encryptedModelBuffer
       );
-      
+
       // Step 3: Generate hash of the decrypted model
-        const modelHash = await generateModelHash(decryptedModelBuffer);
-        console.log("Model hash:", modelHash);
-        console.log("Signed hash:", signedHash);
-        const publicVerificationKey = await fetchPublicVerificationKey();
-        if(await verifySignedHash(modelHash, signedHash, publicVerificationKey)){ 
+      const modelHash = await generateModelHash(decryptedModelBuffer);
+      console.log("Frontend Model hash:", modelHash);
+      console.log("Frontend Signed Model hash:", signedHash);
+      const publicVerificationKey = await fetchPublicVerificationKey();
+      if (await verifySignedHash(modelHash, signedHash, publicVerificationKey)) {
 
-            console.log("Model verified successfully, loading model...");
-        }else{
-            console.error("Model verification failed, aborting decryption.");
+        console.log("Model verified successfully, loading model...");
+      } else {
+        console.error("Model verification failed, aborting decryption.");
 
-        }
+      }
 
       // Don't try to decode the binary data as text
       console.log("Model decrypted successfully! Size:", decryptedModelBuffer.byteLength);
@@ -358,7 +397,7 @@ async function importPublicKey(pemKey) {
       throw new Error("Failed to generate model hash.");
     }
   }
-  
+
   function arrayBufferToHex(buffer) {
     const byteArray = new Uint8Array(buffer);
     let hexString = "";
@@ -368,44 +407,7 @@ async function importPublicKey(pemKey) {
     }
     return hexString;
   }
-  async function verifySignedHash(originalHash, signedHash, publicKey) {
-    // Convert the signed hash from Base64 to Uint8Array
-    const signedHashBuffer = new Uint8Array(atob(signedHash).split("").map(c => c.charCodeAt(0)));
-    
-    // Convert the original hash from hex string to ArrayBuffer
-    const originalHashBuffer = hexStringToArrayBuffer(originalHash);
 
-    // Use the SubtleCrypto API to verify the signature
-    const isValid = await crypto.subtle.verify(
-        {
-            name: "RSASSA-PKCS1-v1_5", // RSA algorithm for signature verification
-        },
-        publicKey,                   // Public key to verify with
-        signedHashBuffer,            // The signed hash (signature)
-        originalHashBuffer           // The original hash that was signed
-    );
-
-    return isValid; // Returns true if the signature is valid, otherwise false
-}
-
-// Utility function to convert a hex string to ArrayBuffer
-function hexStringToArrayBuffer(hex) {
-    const length = hex.length / 2;
-    const arrayBuffer = new ArrayBuffer(length);
-    const uint8Array = new Uint8Array(arrayBuffer);
-    
-    for (let i = 0; i < length; i++) {
-        uint8Array[i] = parseInt(hex.substr(i * 2, 2), 16);
-    }
-    return arrayBuffer;
-}
-function hexStringToArrayBuffer(hexString) {
-  const bytes = new Uint8Array(hexString.length / 2);
-  for (let i = 0; i < hexString.length; i += 2) {
-      bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
-  }
-  return bytes.buffer;
-}
   // Utility functions for data conversion between ArrayBuffer and Base64
   const arrayBufferToBase64 = (buffer) => {
     let binary = "";

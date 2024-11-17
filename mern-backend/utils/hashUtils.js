@@ -13,7 +13,7 @@ function generateModelHash(input) {
     } else if (typeof input === "string") {
       // If input is a file path, stream it
       const stream = fs.createReadStream(input);
-      
+
       stream.on("data", (chunk) => {
         hash.update(chunk);
       });
@@ -32,16 +32,38 @@ function generateModelHash(input) {
 }
 
 function signModelHash(modelHash) {
-  const privateKey = fs.readFileSync(path.join(__dirname, "../digital_signature_keys/private_key.pem"), "utf8");
+  try {
+    const privateKeyPath = path.join(__dirname, "../digital_signature_keys/private_key.pem");
+    console.log("Reading private key from:", privateKeyPath);
 
-  const sign = crypto.createSign("SHA256");
-  sign.update(modelHash);
-  const signedHash = sign.sign(privateKey, "base64");
+    const privateKey = fs.readFileSync(privateKeyPath, "utf8");
+    console.log("Private key loaded, length:", privateKey.length);
 
-  return signedHash;
+    const sign = crypto.createSign("SHA256");
+    sign.update(Buffer.from(modelHash, 'hex')); // Ensure hash is properly formatted
+    const signedHash = sign.sign(privateKey, "base64");
+    console.log("Hash signed successfully, length:", signedHash.length);
+
+    return signedHash;
+  } catch (error) {
+    console.error("Error signing hash:", error);
+    throw error;
+  }
+}
+
+// Add a new function to get the public verification key
+function getPublicVerificationKey() {
+  try {
+    const publicKeyPath = path.join(__dirname, "../digital_signature_keys/public_key.pem");
+    return fs.readFileSync(publicKeyPath, "utf8");
+  } catch (error) {
+    console.error("Error reading public key:", error);
+    throw error;
+  }
 }
 
 module.exports = {
   generateModelHash,
   signModelHash,
+  getPublicVerificationKey
 };

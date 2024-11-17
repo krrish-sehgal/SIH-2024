@@ -1,5 +1,5 @@
 const express = require("express");
-const { getAllEncryptedModels,getPublicVerificationKey } = require("../controllers/modelController.js");
+const { getAllEncryptedModels, getPublicVerificationKey } = require("../controllers/modelController.js");
 
 const router = express.Router();
 
