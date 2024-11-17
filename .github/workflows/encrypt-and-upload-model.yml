@@ -1,4 +1,4 @@
-name: Model Upload and Encrypt
+name: Model Upload with SSE-KMS
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
           echo "Model files found: $MODEL_FILES"
           echo "::set-output name=model_files::$MODEL_FILES"
 
-      - name: Encrypt and Upload Models to S3
+      - name: Upload Models to S3 with SSE-KMS
         run: |
           # Variables
           S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}"  # Use the secret for the bucket name
@@ -38,35 +38,10 @@ jobs:
           # Loop over each model file
           for MODEL_FILE in $MODEL_FILES
           do
-            echo "Processing model file: $MODEL_FILE"
+            echo "Uploading model file to S3 with SSE-KMS: $MODEL_FILE"
 
-            # Step 1: Generate Data Key with KMS
-            DATA_KEY_JSON=$(aws kms generate-data-key --key-id $KMS_KEY_ID --key-spec AES_256 --output json)
-            ENCRYPTED_DATA_KEY=$(echo $DATA_KEY_JSON | jq -r .CiphertextBlob)  # Encrypted data key
-            PLAIN_DATA_KEY=$(echo $DATA_KEY_JSON | jq -r .Plaintext)  # Plain data key (for encrypting model)
+            # Upload the model file directly to S3 with server-side encryption using KMS
+            aws s3 cp $MODEL_FILE s3://$S3_BUCKET_NAME/ --sse aws:kms --sse-kms-key-id $KMS_KEY_ID
 
-            # LOGGING PLAIN DATA KEY
-            echo "Plain Data Key (Base64): $PLAIN_DATA_KEY"  # Log the plain data key (FOR DEBUGGING ONLY)
-
-            # Step 2: Encrypt the model with the generated data key using OpenSSL
-            ENCRYPTED_MODEL_FILE="${MODEL_FILE}.enc"
-
-            # Generate a random IV for encryption
-            IV=$(openssl rand -hex 16)  # 16 bytes IV (32 characters in hex)
-            echo "Generated IV: $IV"  # Log the IV (FOR DEBUGGING ONLY)
-
-            # Perform the encryption
-            openssl enc -aes-256-cbc -in $MODEL_FILE -out $ENCRYPTED_MODEL_FILE -iv $IV -K "$(echo -n $PLAIN_DATA_KEY | xxd -p -c 256)"
-            echo "Encrypted Model File: $ENCRYPTED_MODEL_FILE"
-
-            # Step 3: Upload the encrypted model file to S3
-            aws s3 cp $ENCRYPTED_MODEL_FILE s3://$S3_BUCKET_NAME/ --sse aws:kms --sse-kms-key-id $KMS_KEY_ID
-            echo "Model uploaded and encrypted with KMS: $ENCRYPTED_MODEL_FILE"
-
-            # Step 4: Upload the encrypted data key to S3 (for later decryption)
-            ENCRYPTED_DATA_KEY_FILE="${MODEL_FILE}.dataKey.enc"
-            echo $ENCRYPTED_DATA_KEY | base64 --decode > $ENCRYPTED_DATA_KEY_FILE
-            aws s3 cp $ENCRYPTED_DATA_KEY_FILE s3://$S3_BUCKET_NAME/ --sse aws:kms --sse-kms-key-id $KMS_KEY_ID
-            echo "Encrypted data key uploaded to S3: $ENCRYPTED_DATA_KEY_FILE"
+            echo "Model file uploaded successfully: $MODEL_FILE"
           done
-

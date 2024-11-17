@@ -10,26 +10,14 @@ const {   decryptDataKey,
  */
 exports.getAllEncryptedModels = async (req, res, next) => {
   try {
-    const modelKey = "antispoofing.onnx"; // The model name you want to fetch
+    const modelKey = "antispofing.onnx"; // The model name you want to fetch
 
     // Fetch encrypted files from S3
-    const { modelFile, dataKey } = await fetchEncryptedFilesFromS3(
+    const { modelFile } = await fetchEncryptedFilesFromS3(
       modelKey
     );
 
-    console.log("Encrypted model file:", modelFile);
-    console.log("Encrypted data key:", dataKey);
-
-    // Decrypt the data key
-    const decryptedDataKey = await decryptDataKey(dataKey);
-
-    console.log("Decrypted data key:", decryptedDataKey);
-
-    // Decrypt the model file using the decrypted data key
-    const decryptedModel = decryptModel(modelFile, decryptedDataKey);
-
-
-    console.log("Decrypted model:", decryptedModel);
+    console.log("Decrypted model file:", modelFile);
 
     // You can now send the decrypted model back or use it in your application
     res.status(200).send({ message: "data key decrypted successfully." });

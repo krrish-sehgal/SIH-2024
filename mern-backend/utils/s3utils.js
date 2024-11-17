@@ -14,18 +14,9 @@ async function fetchEncryptedFilesFromS3(modelKey) {
 
     const modelFile = await s3.getObject(modelFileParams).promise();
 
-    // Fetch the encrypted data key from S3
-    const dataKeyParams = {
-      Bucket: bucketName,
-      Key: `${modelKey}.dataKey.enc`, // Assuming the data key is saved with '.dataKey.enc' extension
-    };
-
-    const dataKey = await s3.getObject(dataKeyParams).promise();
-
     // Return both files as buffers
     return {
       modelFile: modelFile.Body, // The content of the encrypted model
-      dataKey: dataKey.Body, // The content of the encrypted data key
     };
   } catch (error) {
     console.error("Error fetching files from S3:", error);
