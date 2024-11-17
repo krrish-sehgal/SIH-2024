@@ -10,7 +10,7 @@ const {   decryptDataKey,
  */
 exports.getAllEncryptedModels = async (req, res, next) => {
   try {
-    const modelKey = "antispofing.onnx"; // The model name you want to fetch
+    const modelKey = "antispoofing.onnx"; // The model name you want to fetch
 
     // Fetch encrypted files from S3
     const { modelFile, dataKey } = await fetchEncryptedFilesFromS3(
