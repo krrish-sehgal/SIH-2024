@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./App.css";
+import { ShieldCheckIcon, KeyIcon, CloudArrowDownIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 
 function App() {
   const [publicKey, setPublicKey] = useState(null);
@@ -333,63 +333,145 @@ function App() {
   };
 
   return (
-    <div className="container">
-      <h1>ML Model Security</h1>
-      <button onClick={generateKeyPair}>Generate Key Pair</button>
-      {publicKey && (
-        <div>
-          <h3>Public Key:</h3>
-          <textarea
-            readOnly
-            value={arrayBufferToBase64(publicKey)}
-          />
-          <button onClick={loadModel}>Load ML Model</button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-12 animate-fade-in">
+          <ShieldCheckIcon className="w-16 h-16 mx-auto text-primary mb-4" />
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">ML Model Security</h1>
+          <p className="text-gray-600">Secure your machine learning models with advanced encryption</p>
         </div>
-      )}
-      {modelLoaded && (
-        <div>
-          <h3>Encrypted Model:</h3>
-          <div className="model-info">
-            <p>Size: {formatFileSize(base64ToArrayBuffer(encryptedModel).byteLength)}</p>
-            <button onClick={downloadEncryptedModel}>Download Encrypted Model</button>
-          </div>
-          <textarea
-            readOnly
-            value={encryptedModel}
-          />
-          <h3>Encrypted AES Key:</h3>
-          <p>Size: {formatFileSize(base64ToArrayBuffer(encryptedAesKey).byteLength)}</p>
-          <textarea
-            readOnly
-            value={encryptedAesKey}
-          />
-          <h3>Initialization Vector (IV):</h3>
-          <p>Size: {formatFileSize(base64ToArrayBuffer(iv).byteLength)}</p>
-          <textarea
-            readOnly
-            value={iv}
-          />
-          <h3>Status:</h3>
-          <p>Model loaded and encrypted. Ready for decryption.</p>
-          <button onClick={decryptModel}>Decrypt Model</button>
-        </div>
-      )}
-      {decryptedModel && (
-        <div>
-          <h3>Decrypted Model Status:</h3>
-          <div className="model-info">
-            {decryptedModelBuffer && (
-              <>
-                <p>Size: {formatFileSize(decryptedModelBuffer.byteLength)}</p>
-                <button onClick={downloadDecryptedModel}>
-                  Download Decrypted Model
+
+        <div className="space-y-8">
+          {/* Key Generation Section */}
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                <KeyIcon className="w-6 h-6 mr-2 text-primary" />
+                Key Generation
+              </h2>
+              <button
+                onClick={generateKeyPair}
+                className="btn-primary"
+                disabled={publicKey}
+              >
+                Generate Key Pair
+              </button>
+            </div>
+
+            {publicKey && (
+              <div className="animate-slide-in">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Public Key
+                </label>
+                <textarea
+                  readOnly
+                  value={arrayBufferToBase64(publicKey)}
+                  className="textarea-custom"
+                />
+                <button
+                  onClick={loadModel}
+                  className="btn-primary mt-4"
+                  disabled={modelLoaded}
+                >
+                  Load ML Model
                 </button>
-              </>
+              </div>
             )}
           </div>
-          <pre>{decryptedModel}</pre>
+
+          {/* Encrypted Model Section */}
+          {modelLoaded && (
+            <div className="card">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
+                <LockClosedIcon className="w-6 h-6 mr-2 text-primary" />
+                Encrypted Model Details
+              </h2>
+
+              <div className="space-y-6">
+                {/* Encrypted Model Info */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Encrypted Model
+                    </label>
+                    <span className="text-sm text-gray-500">
+                      {formatFileSize(base64ToArrayBuffer(encryptedModel).byteLength)}
+                    </span>
+                  </div>
+                  <textarea
+                    readOnly
+                    value={encryptedModel}
+                    className="textarea-custom"
+                  />
+                  <button
+                    onClick={downloadEncryptedModel}
+                    className="btn-secondary mt-2 text-sm"
+                  >
+                    <CloudArrowDownIcon className="w-4 h-4 inline mr-1" />
+                    Download Encrypted Model
+                  </button>
+                </div>
+
+                {/* AES Key and IV Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Encrypted AES Key
+                    </label>
+                    <textarea
+                      readOnly
+                      value={encryptedAesKey}
+                      className="textarea-custom"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Initialization Vector (IV)
+                    </label>
+                    <textarea
+                      readOnly
+                      value={iv}
+                      className="textarea-custom"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={decryptModel}
+                  className="btn-primary w-full"
+                >
+                  Decrypt Model
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Decrypted Model Section */}
+          {decryptedModel && (
+            <div className="card">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
+                <ShieldCheckIcon className="w-6 h-6 mr-2 text-green-600" />
+                Decrypted Model Status
+              </h2>
+
+              {decryptedModelBuffer && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <p className="text-green-700">
+                    Model successfully decrypted! Size: {formatFileSize(decryptedModelBuffer.byteLength)}
+                  </p>
+                  <button
+                    onClick={downloadDecryptedModel}
+                    className="btn-primary mt-3"
+                  >
+                    <CloudArrowDownIcon className="w-5 h-5 inline mr-2" />
+                    Download Decrypted Model
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
