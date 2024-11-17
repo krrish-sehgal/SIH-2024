@@ -4,8 +4,6 @@ on:
   push:
     paths:
       - "models/**" # Trigger on any file changes in the 'models' directory
-    branches:
-      - main # Trigger on the 'main' branch, or use your desired branch
 
 jobs:
   upload_model:
