@@ -14,6 +14,7 @@ function App() {
   const [iv, setIv] = useState(null); // Initialization Vector for AES decryption
   const [modelLoaded, setModelLoaded] = useState(false); // Flag to indicate model is loaded
   const [decryptedModelBuffer, setDecryptedModelBuffer] = useState(null); // Buffer for decrypted model
+  const [signedHash, setSignedHash] = useState(null); // State for signed hash
 
   // Loading indicators for UI feedback during asynchronous operations
   const [isGeneratingKeys, setIsGeneratingKeys] = useState(false);
@@ -115,7 +116,7 @@ function App() {
       // Add artificial delay to ensure smooth loading animation (optional, remove in production)
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const response = await fetch("http://localhost:8000/api/get-encrypted-model", {
+      const response = await fetch("http://localhost:8000/api/encrypted-model", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -136,12 +137,15 @@ function App() {
         ivLength: data.iv?.length
       });
 
-      if (data.encryptedModel && data.encryptedAesKey && data.iv) {
+      if (data.encryptedModel && data.encryptedAesKey && data.iv && data.signedHash) {
+
         // Add small delay before updating state to ensure smooth transition
         await new Promise(resolve => setTimeout(resolve, 200));
         setEncryptedModel(data.encryptedModel);
         setEncryptedAesKey(data.encryptedAesKey);
         setIv(data.iv);
+        setSignedHash(data.signedHash); // Store in state instead of IndexedDB
+
       } else {
         throw new Error("Failed to fetch encrypted model: " + (data.message || "Unknown error"));
       }
@@ -150,84 +154,7 @@ function App() {
       throw error; // Re-throw to be caught by loadModel
     }
   };
-//   const fetchEncryptedModel = async (publicKey) => {
-//     try {
-//         const publicKeyBase64 = arrayBufferToBase64(publicKey);
-//         console.log("Sending public key:", publicKeyBase64.substring(0, 64) + "...");
 
-//         // Add artificial delay to ensure smooth loading animation (optional, remove in production)
-//         await new Promise(resolve => setTimeout(resolve, 500));
-
-//         const response = await fetch("http://localhost:8000/api/get-encrypted-model", {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json",
-//             },
-//             body: JSON.stringify({
-//                 publicKey: publicKeyBase64,
-//             }),
-//         });
-
-//         if (!response.ok) {
-//             throw new Error(`HTTP error! status: ${response.status}`);
-//         }
-
-//         const data = await response.json();
-//         console.log("Received encrypted data lengths:", {
-//             modelLength: data.encryptedModel?.length,
-//             keyLength: data.encryptedAesKey?.length,
-//             ivLength: data.iv?.length,
-//         });
-
-//         if (data.encryptedModel && data.encryptedAesKey && data.iv) {
-//             // Step 1: Decrypt the AES key using the user's private key
-//             const decryptedAesKey = decryptAesKey(data.encryptedAesKey);
-
-//             // Step 2: Decrypt the model using the decrypted AES key
-//             const decryptedModel = decryptModelWithAesKey(data.encryptedModel, decryptedAesKey, data.iv);
-
-//             // Step 3: Generate hash of the decrypted model
-//             const modelHash = generateModelHash(decryptedModel);
-
-//             // Step 4: Verify the digital signature with the backend public key
-//             const isValidSignature = await verifySignedHash(modelHash, data.signedHash);
-//             if (!isValidSignature) {
-//                 throw new Error("Invalid signature: Model integrity check failed");
-//             }
-
-//             // Step 5: Compare the generated hash with the received model hash
-//             if (modelHash !== data.modelHash) {
-//                 throw new Error("Model hash mismatch: The model may have been tampered with.");
-//             }
-
-//             console.log("Model verified successfully, loading model...");
-//             loadModel(decryptedModel);
-//         } else {
-//             throw new Error("Failed to fetch encrypted model: " + (data.message || "Unknown error"));
-//         }
-//     } catch (error) {
-//         console.error("Error fetching encrypted model:", error);
-//         throw error; // Re-throw to be caught by loadModel
-//     }
-// };
-
-
-// Helper function to verify the signed hash
-async function verifySignedHash(modelHash, signedHash) {
-    const response = await fetch("http://localhost:8000/api/verify-signature", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            modelHash: modelHash,
-            signedHash: signedHash,
-        }),
-    });
-
-    const data = await response.json();
-    return data.isValid;  // true/false based on verification result
-}
 
 
   // Helper function to store the private key securely in IndexedDB
@@ -269,17 +196,19 @@ async function verifySignedHash(modelHash, signedHash) {
         const keyRequest = store.get(keyName);
         keyRequest.onsuccess = async () => {
           const keyData = keyRequest.result;
-
-          // Import the private key
-          const privateKey = await window.crypto.subtle.importKey(
-            "pkcs8",
-            keyData,
-            { name: "RSA-OAEP", hash: "SHA-256" },
-            true,
-            ["decrypt"]
-          );
-
-          resolve(privateKey);
+          if (keyName === "privateKey") {
+            // Only import as CryptoKey if it's the private key
+            const privateKey = await window.crypto.subtle.importKey(
+              "pkcs8",
+              keyData,
+              { name: "RSA-OAEP", hash: "SHA-256" },
+              true,
+              ["decrypt"]
+            );
+            resolve(privateKey);
+          } else {
+            resolve(keyData); // Return raw data for other keys
+          }
         };
         keyRequest.onerror = () => reject(keyRequest.error);
       };
@@ -336,6 +265,44 @@ async function verifySignedHash(modelHash, signedHash) {
       throw error;  // Re-throw to maintain error chain
     }
   };
+  async function fetchPublicVerificationKey() {
+    // Fetch the PEM formatted public key from the server
+    const response = await fetch('http://localhost:8000/api/public-verification-key');
+    if (!response.ok) {
+        throw new Error("Failed to fetch public key.");
+    }
+
+    const publicKeyPem = await response.text(); // Assuming the public key is returned as PEM format
+
+    // Import the PEM formatted public key into a CryptoKey object
+    const publicKey = await importPublicKey(publicKeyPem);
+
+    return publicKey; // Return the imported CryptoKey object
+}
+
+async function importPublicKey(pemKey) {
+    // Remove the "BEGIN" and "END" parts of the PEM string and decode the base64
+    const keyParts = pemKey.replace(/-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\n/g, '');
+    const keyBytes = Uint8Array.from(atob(keyParts), c => c.charCodeAt(0));
+
+    try {
+        const importedKey = await crypto.subtle.importKey(
+            "spki", // Format for public keys
+            keyBytes,
+            {
+                name: "RSA-OAEP", // Algorithm name (or you can use another algorithm, depending on your use case)
+                hash: { name: "SHA-256" }
+            },
+            true, // Extractable
+            ["verify"] // The operations the key will be used for
+        );
+        return importedKey;
+    } catch (error) {
+        console.error("Error importing public key:", error);
+        throw new Error("Failed to import public key.");
+    }
+}
+
 
   // Function to decrypt the model data using the AES key and IV
   const decryptWithAes = async (aesKey, encryptedModelBase64, ivBase64) => {
@@ -358,6 +325,19 @@ async function verifySignedHash(modelHash, signedHash) {
         aesKey,
         encryptedModelBuffer
       );
+      
+      // Step 3: Generate hash of the decrypted model
+        const modelHash = await generateModelHash(decryptedModelBuffer);
+        console.log("Model hash:", modelHash);
+        console.log("Signed hash:", signedHash);
+        const publicVerificationKey = await fetchPublicVerificationKey();
+        if(await verifySignedHash(modelHash, signedHash, publicVerificationKey)){ 
+
+            console.log("Model verified successfully, loading model...");
+        }else{
+            console.error("Model verification failed, aborting decryption.");
+
+        }
 
       // Don't try to decode the binary data as text
       console.log("Model decrypted successfully! Size:", decryptedModelBuffer.byteLength);
@@ -369,7 +349,63 @@ async function verifySignedHash(modelHash, signedHash) {
       throw new Error("Model decryption failed.");
     }
   };
+  async function generateModelHash(inputBuffer) {
+    try {
+      const hashBuffer = await crypto.subtle.digest("SHA-256", inputBuffer);
+      return arrayBufferToHex(hashBuffer);
+    } catch (error) {
+      console.error("Error generating hash:", error);
+      throw new Error("Failed to generate model hash.");
+    }
+  }
+  
+  function arrayBufferToHex(buffer) {
+    const byteArray = new Uint8Array(buffer);
+    let hexString = "";
+    for (let i = 0; i < byteArray.length; i++) {
+      const hex = byteArray[i].toString(16).padStart(2, "0");
+      hexString += hex;
+    }
+    return hexString;
+  }
+  async function verifySignedHash(originalHash, signedHash, publicKey) {
+    // Convert the signed hash from Base64 to Uint8Array
+    const signedHashBuffer = new Uint8Array(atob(signedHash).split("").map(c => c.charCodeAt(0)));
+    
+    // Convert the original hash from hex string to ArrayBuffer
+    const originalHashBuffer = hexStringToArrayBuffer(originalHash);
 
+    // Use the SubtleCrypto API to verify the signature
+    const isValid = await crypto.subtle.verify(
+        {
+            name: "RSASSA-PKCS1-v1_5", // RSA algorithm for signature verification
+        },
+        publicKey,                   // Public key to verify with
+        signedHashBuffer,            // The signed hash (signature)
+        originalHashBuffer           // The original hash that was signed
+    );
+
+    return isValid; // Returns true if the signature is valid, otherwise false
+}
+
+// Utility function to convert a hex string to ArrayBuffer
+function hexStringToArrayBuffer(hex) {
+    const length = hex.length / 2;
+    const arrayBuffer = new ArrayBuffer(length);
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    for (let i = 0; i < length; i++) {
+        uint8Array[i] = parseInt(hex.substr(i * 2, 2), 16);
+    }
+    return arrayBuffer;
+}
+function hexStringToArrayBuffer(hexString) {
+  const bytes = new Uint8Array(hexString.length / 2);
+  for (let i = 0; i < hexString.length; i += 2) {
+      bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
+  }
+  return bytes.buffer;
+}
   // Utility functions for data conversion between ArrayBuffer and Base64
   const arrayBufferToBase64 = (buffer) => {
     let binary = "";
