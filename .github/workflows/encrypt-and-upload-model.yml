@@ -45,9 +45,19 @@ jobs:
             ENCRYPTED_DATA_KEY=$(echo $DATA_KEY_JSON | jq -r .CiphertextBlob)  # Encrypted data key
             PLAIN_DATA_KEY=$(echo $DATA_KEY_JSON | jq -r .Plaintext)  # Plain data key (for encrypting model)
 
+            # LOGGING PLAIN DATA KEY
+            echo "Plain Data Key (Base64): $PLAIN_DATA_KEY"  # Log the plain data key (FOR DEBUGGING ONLY)
+
             # Step 2: Encrypt the model with the generated data key using OpenSSL
             ENCRYPTED_MODEL_FILE="${MODEL_FILE}.enc"
-            openssl enc -aes-256-cbc -in $MODEL_FILE -out $ENCRYPTED_MODEL_FILE -pass pass:"$PLAIN_DATA_KEY"
+
+            # Generate a random IV for encryption
+            IV=$(openssl rand -hex 16)  # 16 bytes IV (32 characters in hex)
+            echo "Generated IV: $IV"  # Log the IV (FOR DEBUGGING ONLY)
+
+            # Perform the encryption
+            openssl enc -aes-256-cbc -in $MODEL_FILE -out $ENCRYPTED_MODEL_FILE -iv $IV -K "$(echo -n $PLAIN_DATA_KEY | xxd -p -c 256)"
+            echo "Encrypted Model File: $ENCRYPTED_MODEL_FILE"
 
             # Step 3: Upload the encrypted model file to S3
             aws s3 cp $ENCRYPTED_MODEL_FILE s3://$S3_BUCKET_NAME/ --sse aws:kms --sse-kms-key-id $KMS_KEY_ID
@@ -59,3 +69,4 @@ jobs:
             aws s3 cp $ENCRYPTED_DATA_KEY_FILE s3://$S3_BUCKET_NAME/ --sse aws:kms --sse-kms-key-id $KMS_KEY_ID
             echo "Encrypted data key uploaded to S3: $ENCRYPTED_DATA_KEY_FILE"
           done
+
