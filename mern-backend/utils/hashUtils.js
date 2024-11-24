@@ -2,6 +2,18 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
+async function signModelHash(modelHash, privateKey) {
+  try {
+    const sign = crypto.createSign("SHA256");
+    sign.update(Buffer.from(modelHash, "hex")); // Ensure the model hash is properly formatted
+    const signedHash = sign.sign(privateKey, "base64");
+    console.log("Hash signed successfully, length:", signedHash.length);
+    return signedHash;
+  } catch (error) {
+    console.error("Error signing hash:", error);
+    throw error;
+  }
+}
 function generateModelHash(input) {
   return new Promise((resolve, reject) => {
     const hash = crypto.createHash("sha256");
@@ -29,26 +41,6 @@ function generateModelHash(input) {
       reject(new Error("Input must be a file path string or Buffer"));
     }
   });
-}
-
-function signModelHash(modelHash) {
-  try {
-    const privateKeyPath = path.join(__dirname, "../digital_signature_keys/private_key.pem");
-    console.log("Reading private key from:", privateKeyPath);
-
-    const privateKey = fs.readFileSync(privateKeyPath, "utf8");
-    console.log("Private key loaded, length:", privateKey.length);
-
-    const sign = crypto.createSign("SHA256");
-    sign.update(Buffer.from(modelHash, 'hex')); // Ensure hash is properly formatted
-    const signedHash = sign.sign(privateKey, "base64");
-    console.log("Hash signed successfully, length:", signedHash.length);
-
-    return signedHash;
-  } catch (error) {
-    console.error("Error signing hash:", error);
-    throw error;
-  }
 }
 
 // Add a new function to get the public verification key

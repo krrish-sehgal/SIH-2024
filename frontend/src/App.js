@@ -116,7 +116,7 @@ function App() {
       // Add artificial delay to ensure smooth loading animation (optional, remove in production)
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const response = await fetch("http://localhost:8000/api/encrypted-model", {
+      const response = await fetch("http://localhost:8000/api/encrypted-models", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
