@@ -2,7 +2,7 @@ const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 
 
-async function fetchEncryptedFilesFromS3(modelKey) {
+async function fetchDecryptedModelsFromS3(modelKey) {
   const bucketName = process.env.S3_BUCKET_NAME; // Ensure this is set in your environment
 
   try {
@@ -22,4 +22,4 @@ async function fetchEncryptedFilesFromS3(modelKey) {
   }
 }
 
-module.exports = { fetchEncryptedFilesFromS3};
+module.exports = { fetchDecryptedModelsFromS3};
