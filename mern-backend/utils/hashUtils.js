@@ -1,16 +1,24 @@
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const { fetchPrivateKeyFromS3 } = require("./s3utils");
 
-async function signModelHash(modelHash, privateKey) {
+
+async function combineAndSign(hashes) {
   try {
+    const combinedHash = crypto.createHash("sha256").update(Buffer.concat(hashes)).digest();
+    console.log(`Combined hash: ${combinedHash.toString("hex")}`);
+
+    const privateKey = await fetchPrivateKeyFromS3();
     const sign = crypto.createSign("SHA256");
-    sign.update(Buffer.from(modelHash, "hex")); // Ensure the model hash is properly formatted
+    sign.update(combinedHash);  
     const signedHash = sign.sign(privateKey, "base64");
+    
     console.log("Hash signed successfully, length:", signedHash.length);
+
     return signedHash;
   } catch (error) {
-    console.error("Error signing hash:", error);
+    console.error("Error combining and signing hashes:", error);
     throw error;
   }
 }
@@ -19,11 +27,11 @@ function generateModelHash(input) {
     const hash = crypto.createHash("sha256");
 
     if (Buffer.isBuffer(input)) {
-      // If input is a buffer, hash it directly
+
       hash.update(input);
       resolve(hash.digest("hex"));
     } else if (typeof input === "string") {
-      // If input is a file path, stream it
+
       const stream = fs.createReadStream(input);
 
       stream.on("data", (chunk) => {
@@ -43,19 +51,7 @@ function generateModelHash(input) {
   });
 }
 
-// Add a new function to get the public verification key
-function getPublicVerificationKey() {
-  try {
-    const publicKeyPath = path.join(__dirname, "../digital_signature_keys/public_key.pem");
-    return fs.readFileSync(publicKeyPath, "utf8");
-  } catch (error) {
-    console.error("Error reading public key:", error);
-    throw error;
-  }
-}
-
 module.exports = {
   generateModelHash,
-  signModelHash,
-  getPublicVerificationKey
+  combineAndSign,
 };

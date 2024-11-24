@@ -2,11 +2,10 @@ const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 
 
-async function fetchDecryptedModelsFromS3(modelName, modelVersions) {
+async function fetchDecryptedModelsFromS3(modelName, modelVersion) {
   const bucketName = process.env.S3_BUCKET_NAME; // Ensure this is set in your environment
 
   try {
-    const modelVersion = modelVersions[modelName]; 
     if (!modelVersion) {
       throw new Error(`Version not found for model ${modelName}`);
     }

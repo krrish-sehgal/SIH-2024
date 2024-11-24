@@ -1,82 +1,26 @@
-const { fetchDecryptedModelsFromS3 } = require("../utils/s3utils");
-const { encryptModel } = require("../utils/encryptionUtils.js");
-const { fetchPrivateKeyFromS3 } = require("../utils/s3utils"); // Import the function
-
-const { generateModelHash, signModelHash } = require("../utils/hashUtils.js");
-const fs = require("fs/promises"); // Ensure this is being used
+const { combineAndSign } = require("../utils/hashUtils.js");
+const { getEncryptedModelsAndHashes, fetchModelVersions } = require("../utils/processModel");
+const { encryptAesKey } = require("../utils/encryptionUtils");
 const crypto = require("crypto");
-
 const path = require("path");
-const { versions } = require("process");
 
 exports.getAllEncryptedModels = async (req, res, next) => {
   try {
-    const versionsFilePath = path.resolve(__dirname, "../../model_versions.json");
-    const modelVersions = JSON.parse(await fs.readFile(versionsFilePath, { encoding: "utf-8" }));
+    const modelVersions = await fetchModelVersions();
 
-
-    // Extract the public key from the request body
     const publicKeyBase64 = req.body.publicKey;
     if (!publicKeyBase64) {
       return res.status(400).json({ message: "Public key is required" });
     }
 
-    const aesKey = crypto.randomBytes(32); 
+    const aesKey = crypto.randomBytes(32);
     const iv = crypto.randomBytes(16);
+    const {encryptedModels,hashes} = await getEncryptedModelsAndHashes(modelVersions, aesKey, iv);
 
-    const encryptedModels = []; 
-    const hashes = []; 
+    const signedHash = await combineAndSign(hashes);
+    console.log("Signed hash:", signedHash);
+    const encryptedAesKey = encryptAesKey(aesKey, publicKeyBase64);
 
-    for (const modelName of Object.keys(modelVersions)) {
-      try {
-
-        const { modelFile } = await fetchDecryptedModelsFromS3(modelName,modelVersions);
-
-        const cipher = crypto.createCipheriv("aes-256-cbc", aesKey, iv);
-        let encryptedModel = Buffer.concat([cipher.update(modelFile), cipher.final()]);
-
-        const modelHash = await generateModelHash(modelFile);
-
-        encryptedModels.push({
-          modelName,
-          encryptedModel: encryptedModel.toString("base64"),
-          version: modelVersions[modelName],
-        });
-
-        hashes.push(Buffer.from(modelHash, "hex")); 
-      } catch (error) {
-        console.error(`Error processing model ${modelName}:`, error);
-        throw error;
-      }
-    }
-
-   const combinedHash = crypto.createHash("sha256").update(Buffer.concat(hashes)).digest();
-    console.log(`Combined hash: ${combinedHash.toString("hex")}`);
-
-    const privateKey = await fetchPrivateKeyFromS3();
-
-    const signedHash = await signModelHash(combinedHash.toString("hex"), privateKey);
-    console.log(`Signed combined hash: ${signedHash}`);
-    
-        // Convert base64 to DER format
-        const publicKeyDer = Buffer.from(publicKeyBase64, 'base64');
-
-        // Create public key object using spki format
-        const publicKey = crypto.createPublicKey({
-            key: publicKeyDer,
-            format: 'der',
-            type: 'spki'
-        });
-
-   
-    const encryptedAesKey = crypto.publicEncrypt(
-      {
-          key: publicKey,
-          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-          oaepHash: 'sha256'
-      },
-      aesKey
-  );
     res.status(200).json({
       message: "Models encrypted and signed successfully",
       encryptedModels,
@@ -100,3 +44,4 @@ exports.getPublicVerificationKey = async (req, res, next) => {
     res.status(500).json({ error: "Failed to fetch public key." });
   }
 }
+
