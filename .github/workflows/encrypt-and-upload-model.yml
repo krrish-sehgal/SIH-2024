@@ -3,7 +3,7 @@ name: Model Upload with Versioning and Cleanup
 on:
   push:
     paths:
-      - "models/**"            # Trigger on changes in the 'models' directory
+      - "s3-uploads/**"            # Trigger on changes in the 's3-uploads' directory
       - "model_versions.json"  # Trigger on changes in the version file
 
 jobs:
@@ -43,6 +43,20 @@ jobs:
 
           echo "changed_models=$CHANGED_MODELS" >> $GITHUB_ENV
 
+      - name: Upload private key to S3 (from s3-uploads folder)
+        run: |
+          PRIVATE_KEY_PATH="s3-uploads/private_key.pem"  # Path of your private key in the s3-uploads folder
+          S3_BUCKET="${{ secrets.S3_BUCKET_NAME }}"
+          KMS_KEY_ID="${{ secrets.KMS_KEY_ID }}"
+          
+          # Upload private key to S3 with encryption
+          echo "Uploading private key to S3..."
+          aws s3 cp "$PRIVATE_KEY_PATH" "s3://$S3_BUCKET/keys/private_key.pem" --sse aws:kms --sse-kms-key-id "$KMS_KEY_ID"
+
+          # After successful upload, delete the private key from the repository
+          echo "Deleting private key from the repository after uploading to S3..."
+          rm "$PRIVATE_KEY_PATH"
+
       - name: Upload updated models
         if: env.changed_models != ''
         run: |
@@ -58,7 +72,7 @@ jobs:
             fi
 
             CURRENT_VERSION=$(jq -r --arg model "$MODEL" '.[$model]' <<< "$CURRENT_VERSIONS")
-            MODEL_PATH="models/$MODEL"
+            MODEL_PATH="s3-uploads/$MODEL"
             S3_FILE="s3://$S3_BUCKET/${MODEL}-${CURRENT_VERSION}"
 
             echo "Uploading $MODEL (version $CURRENT_VERSION) to $S3_FILE"
@@ -76,16 +90,19 @@ jobs:
             fi
           done
 
-      - name: Commit and push model deletions
+      - name: Empty the s3-uploads folder
+        if: env.changed_models != ''
+        run: |
+          echo "Cleaning up the s3-uploads folder..."
+          rm -rf s3-uploads/*
+
+      - name: Commit model deletions and changes
         if: env.changed_models != ''
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
           
-          # Add and commit changes (deleted models)
-          git add models/
-          git commit -m "Delete uploaded models from repository"
-          
-          # Push changes back to the repository
+          git add -u
+          git commit -m "Delete uploaded models and private key from repository after S3 upload"
           git push
