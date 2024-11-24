@@ -1,5 +1,5 @@
 {
-    "antispoofing.onnx": "1.0.0",
+    "antispoofing.onnx": "1.0.1",
     "yolo_face_detection.onnx": "1.0.0"
   }
    

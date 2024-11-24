@@ -70,13 +70,13 @@ jobs:
             fi
           done
 
-      - name: Commit model deletions
-        if: steps.compare_versions.outputs.changed_models != ''
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          
-          # Stage deleted files and commit the changes
-          git add -u
-          git commit -m "Delete updated models from repo after S3 upload"
-          git push
+          - name: Commit model deletions
+          if: steps.compare_versions.outputs.changed_models != ''
+          run: |
+            git config --global user.name "github-actions"
+            git config --global user.email "github-actions@github.com"
+            git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+            
+            git add -u
+            git commit -m "Delete updated models from repo after S3 upload"
+            git push
