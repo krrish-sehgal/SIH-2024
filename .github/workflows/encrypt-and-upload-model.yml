@@ -76,13 +76,16 @@ jobs:
             fi
           done
 
-      - name: Commit model deletions
+      - name: Commit and push model deletions
         if: env.changed_models != ''
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
           
-          git add -u
-          git commit -m "Delete updated models from repo after S3 upload"
+          # Add and commit changes (deleted models)
+          git add models/
+          git commit -m "Delete uploaded models from repository"
+          
+          # Push changes back to the repository
           git push
