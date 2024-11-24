@@ -41,17 +41,22 @@ jobs:
             fi
           done
 
-          echo "::set-output name=changed_models::$CHANGED_MODELS"
+          echo "changed_models=$CHANGED_MODELS" >> $GITHUB_ENV
 
       - name: Upload updated models
-        if: steps.compare_versions.outputs.changed_models != ''
+        if: env.changed_models != ''
         run: |
-          CHANGED_MODELS="${{ steps.compare_versions.outputs.changed_models }}"
+          CHANGED_MODELS="${{ env.changed_models }}"
           CURRENT_VERSIONS=$(cat model_versions.json)
           S3_BUCKET="${{ secrets.S3_BUCKET_NAME }}"
           KMS_KEY_ID="${{ secrets.KMS_KEY_ID }}"
 
           for MODEL in $CHANGED_MODELS; do
+            if [ -z "$MODEL" ]; then
+              echo "Skipping empty model entry."
+              continue
+            fi
+
             CURRENT_VERSION=$(jq -r --arg model "$MODEL" '.[$model]' <<< "$CURRENT_VERSIONS")
             MODEL_PATH="models/$MODEL"
             S3_FILE="s3://$S3_BUCKET/${MODEL}-${CURRENT_VERSION}"
@@ -67,16 +72,17 @@ jobs:
               rm "$MODEL_PATH"
             else
               echo "Model upload failed for $MODEL."
+              exit 1
             fi
           done
 
-          - name: Commit model deletions
-          if: steps.compare_versions.outputs.changed_models != ''
-          run: |
-            git config --global user.name "github-actions"
-            git config --global user.email "github-actions@github.com"
-            git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
-            
-            git add -u
-            git commit -m "Delete updated models from repo after S3 upload"
-            git push
+      - name: Commit model deletions
+        if: env.changed_models != ''
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          git add -u
+          git commit -m "Delete updated models from repo after S3 upload"
+          git push
