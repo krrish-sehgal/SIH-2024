@@ -3,6 +3,7 @@ const { getEncryptedModelsAndHashes, fetchModelVersions } = require("../utils/pr
 const { encryptAesKey } = require("../utils/encryptionUtils");
 const crypto = require("crypto");
 const path = require("path");
+const fs = require("fs");
 
 exports.getAllEncryptedModels = async (req, res, next) => {
   try {
