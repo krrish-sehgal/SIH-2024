@@ -358,7 +358,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   async function verifySignedHash(originalHash, signedHash, publicKey) {
     try {
       ///////////////////////////////////////////////////////////////to be changed
-      return 1;
+      
       // Convert the signed hash from base64
       const signatureBytes = new Uint8Array(atob(signedHash).split('').map(c => c.charCodeAt(0)));
 
