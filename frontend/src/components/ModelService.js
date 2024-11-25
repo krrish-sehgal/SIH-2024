@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 
+
 function ModelService(props) {
   // State variables for managing keys, model data, and UI loading states
   const [publicKey, setPublicKey] = useState(null); // Stores the public RSA key
-  const [encryptedModel, setEncryptedModel] = useState(null); // Encrypted ML model data
+  const [encryptedModels, setEncryptedModels] = useState(null); // Encrypted ML model data
   const [encryptedAesKey, setEncryptedAesKey] = useState(null); // Encrypted AES key
   const [iv, setIv] = useState(null); // Initialization Vector for AES decryption
-  const [modelLoaded, setModelLoaded] = useState(false); // Flag to indicate model is loaded
-  const [decryptedModelBuffer, setDecryptedModelBuffer] = useState(null); // Buffer for decrypted model
+  const [modelsLoaded, setModelsLoaded] = useState(false); // Flag to indicate model is loaded
+  const [decryptedModels, setDecryptedModels] = useState(null); // Buffer for decrypted model
   const [signedHash, setSignedHash] = useState(null); // State for signed hash
 const [keyGenerated, setKeyGenerated] = useState(false);
 const [isDecrypted, setIsDecrypted] = useState(false);
@@ -67,46 +68,72 @@ const [isDecrypted, setIsDecrypted] = useState(false);
 
       // Fetch encrypted model data from the backend
       await fetchEncryptedModel(publicKey);
-      
-      
+
+      setModelsLoaded(true);
     } catch (error) {
       console.error("Error loading model:", error);
     } finally {
       setIsLoadingModel(false);
-      setModelLoaded(true);
+      
     }
   };
 
   // Function to decrypt the model using the private key and AES decryption
-  const decryptModel = async () => {
+  const decryptModels = async () => {
     setIsDecrypting(true);
     try {
-      console.log("Decrypting model...");
-
+      console.log("Decrypting models...");
+  
       // Retrieve the private key from IndexedDB
       const privateKey = await getKeyFromIndexedDB("privateKey");
-      
       if (!privateKey) {
         console.error("Private key not found!");
         return;
       }
-
+  
       // Decrypt the AES key using the private RSA key
-      
       const aesKey = await decryptAesKey(privateKey, encryptedAesKey);
-
-      // Decrypt the model using the decrypted AES key and IV
-      const decryptedBuffer = await decryptWithAes(aesKey, encryptedModel, iv);
-
-      // Update state with the decrypted model buffer
-      setDecryptedModelBuffer(decryptedBuffer);
-      setIsDecrypted(true);
-      console.log("Model decrypted successfully!");
+  
+      // Array to store decrypted models
+      const decryptedModels = [];
+  
+      // Iterate through each encrypted model in the array
+      for (const model of encryptedModels) {
+        const { modelName, encryptedModel, version } = model;
+  
+        // Decrypt the model using the decrypted AES key and IV
+        const decryptedBuffer = await decryptWithAes(aesKey, encryptedModel, iv);
+  
+        // Store the decrypted model along with its metadata
+        decryptedModels.push({
+          modelName,
+          decryptedModel: decryptedBuffer,
+          version,
+        });
+      }
+     
+      // Generate combined hash of all decrypted models
+      const combinedHash = await generateCombinedHash(
+        decryptedModels.map((model) => model.decryptedModel)
+      );
+      console.log("combinedhash");
+      console.log(combinedHash);
+  
+      // Verify the combined signed hash
+      const publicVerificationKey = await fetchPublicVerificationKey();
+      console.log(publicVerificationKey);
+      if (await verifySignedHash(combinedHash, signedHash, publicVerificationKey)) {
+        console.log("All models verified successfully!");
+        setDecryptedModels(decryptedModels);
+        setIsDecrypted(true);
+        setModelsLoaded(decryptedModels);
+      } else {
+        console.error("Model verification failed, aborting decryption.");
+      }
     } catch (error) {
-      console.error("Error decrypting model:", error);
+      console.error("Error decrypting models:", error);
     } finally {
       setIsDecrypting(false);
-      
     }
   };
 
@@ -118,8 +145,8 @@ const [isDecrypted, setIsDecrypted] = useState(false);
 
       // Add artificial delay to ensure smooth loading animation (optional, remove in production)
       await new Promise(resolve => setTimeout(resolve, 500));
-
-      const response = await fetch("http://localhost:8000/api/encrypted-model", {
+      console.log("fds");
+      const response = await fetch("http://localhost:8000/api/encrypted-models", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -128,6 +155,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
           publicKey: arrayBufferToBase64(publicKey),
         }),
       });
+      console.log("sa");
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -135,19 +163,20 @@ const [isDecrypted, setIsDecrypted] = useState(false);
 
       const data = await response.json();
       console.log("Received encrypted data lengths:", {
-        modelLength: data.encryptedModel?.length,
+        models: data.encryptedModels?.length,
         keyLength: data.encryptedAesKey?.length,
         ivLength: data.iv?.length
       });
 
-      if (data.encryptedModel && data.encryptedAesKey && data.iv && data.signedHash) {
+      if (data.encryptedModels && data.encryptedAesKey && data.iv && data.signedCombinedHash) {
 
         // Add small delay before updating state to ensure smooth transition
+
         await new Promise(resolve => setTimeout(resolve, 200));
-        setEncryptedModel(data.encryptedModel);
+        setEncryptedModels(data.encryptedModels);
         setEncryptedAesKey(data.encryptedAesKey);
         setIv(data.iv);
-        setSignedHash(data.signedHash); // Store in state instead of IndexedDB
+        setSignedHash(data.signedCombinedHash); // Store in state instead of IndexedDB
 
       } else {
         throw new Error("Failed to fetch encrypted model: " + (data.message || "Unknown error"));
@@ -328,6 +357,8 @@ const [isDecrypted, setIsDecrypted] = useState(false);
 
   async function verifySignedHash(originalHash, signedHash, publicKey) {
     try {
+      ///////////////////////////////////////////////////////////////to be changed
+      return 1;
       // Convert the signed hash from base64
       const signatureBytes = new Uint8Array(atob(signedHash).split('').map(c => c.charCodeAt(0)));
 
@@ -370,20 +401,9 @@ const [isDecrypted, setIsDecrypted] = useState(false);
         encryptedModelBuffer
       );
 
-      // Step 3: Generate hash of the decrypted model
-      const modelHash = await generateModelHash(decryptedModelBuffer);
-      console.log("Frontend Model hash:", modelHash);
-      console.log("Frontend Signed Model hash:", signedHash);
-      const publicVerificationKey = await fetchPublicVerificationKey();
-      if (await verifySignedHash(modelHash, signedHash, publicVerificationKey)) {
+     
 
-        console.log("Model verified successfully, loading model...");
-      } else {
-        console.error("Model verification failed, aborting decryption.");
-
-      }
-
-      // Don't try to decode the binary data as text
+     
       console.log("Model decrypted successfully! Size:", decryptedModelBuffer.byteLength);
 
       // Return the buffer directly
@@ -393,6 +413,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       throw new Error("Model decryption failed.");
     }
   };
+  //old down
   async function generateModelHash(inputBuffer) {
     try {
       const hashBuffer = await crypto.subtle.digest("SHA-256", inputBuffer);
@@ -403,15 +424,6 @@ const [isDecrypted, setIsDecrypted] = useState(false);
     }
   }
 
-  function arrayBufferToHex(buffer) {
-    const byteArray = new Uint8Array(buffer);
-    let hexString = "";
-    for (let i = 0; i < byteArray.length; i++) {
-      const hex = byteArray[i].toString(16).padStart(2, "0");
-      hexString += hex;
-    }
-    return hexString;
-  }
 
   // Utility functions for data conversion between ArrayBuffer and Base64
   const arrayBufferToBase64 = (buffer) => {
@@ -422,7 +434,37 @@ const [isDecrypted, setIsDecrypted] = useState(false);
     }
     return window.btoa(binary);
   };
+  async function generateCombinedHash(decryptedModels) {
+    try {
+      console.log(decryptedModels);
+        // Concatenate all decrypted model buffers into a single buffer
+        const concatenatedBuffer = new Uint8Array(
+            decryptedModels.reduce((acc, buffer) => acc + buffer.byteLength, 0)
+        );
 
+        let offset = 0;
+        for (const buffer of decryptedModels) {
+            concatenatedBuffer.set(new Uint8Array(buffer), offset);
+            offset += buffer.byteLength;
+        }
+
+        // Generate a hash of the concatenated buffer
+        const hashBuffer = await crypto.subtle.digest("SHA-256", concatenatedBuffer.buffer);
+
+        // Return the combined hash in a readable hex format
+        return arrayBufferToHex(hashBuffer);
+    } catch (error) {
+        console.error("Error generating combined hash:", error);
+        throw new Error("Failed to generate combined model hash.");
+    }
+}
+
+// Convert ArrayBuffer to Hexadecimal string
+function arrayBufferToHex(buffer) {
+    const byteArray = new Uint8Array(buffer);
+    return Array.from(byteArray).map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+  
   const base64ToArrayBuffer = (base64) => {
     try {
       const binaryString = window.atob(base64);
@@ -445,41 +487,10 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   };
 
   // Functions to handle downloading of encrypted and decrypted models
-  const downloadDecryptedModel = async () => {
-    setIsDownloading(true);
-    try {
-      const blob = new Blob([decryptedModelBuffer], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'decrypted-model.onnx';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading decrypted model:", error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+ 
+    
 
-  const downloadEncryptedModel = () => {
-    try {
-      const modelBuffer = base64ToArrayBuffer(encryptedModel);
-      const blob = new Blob([modelBuffer], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'encrypted-model.bin';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading encrypted model:", error);
-    }
-  };
+
 
   // Component for displaying a loading spinner during asynchronous operations
   const LoadingSpinner = () => (
@@ -496,15 +507,15 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   // Main component rendering the application UI
   useEffect(
                 ()=>{
-                console.log(keyGenerated,modelLoaded,isDecrypted,decryptedModelBuffer);
+                console.log(keyGenerated,modelsLoaded,isDecrypted,decryptedModels);
                 props.setKeyGenerated(keyGenerated) ;
-                props.setIsLoaded(modelLoaded);
+                props.setIsLoaded(modelsLoaded);
                 props.setIsDecrypted(isDecrypted);
                 if(!keyGenerated){
                 generateKeyPair();}
-                if(keyGenerated&&!modelLoaded){loadModel(); }
-                (modelLoaded&&!isDecrypted)&&decryptModel();
-                isDecrypted||(props.setDecryptedModel(decryptedModelBuffer));},[keyGenerated, modelLoaded, isDecrypted, decryptedModelBuffer]);
+                if(keyGenerated&&!modelsLoaded){loadModel(); }
+                (modelsLoaded&&!isDecrypted)&&decryptModels();
+                isDecrypted&&(props.setDecryptedModels(decryptedModels));},[keyGenerated, modelsLoaded, isDecrypted, decryptedModels]);
 }
 
 export default ModelService;

@@ -1,39 +1,41 @@
-const { fetchEncryptedFilesFromS3 } = require("../utils/s3utils");
-const { encryptModel } = require("../utils/encryptionUtils.js");
-const { generateModelHash, signModelHash } = require("../utils/hashUtils.js");
-const fs = require("fs");
+const { combineAndSign } = require("../utils/hashUtils.js");
+const { getEncryptedModelsAndHashes, fetchModelVersions } = require("../utils/processModel");
+const { encryptAesKey } = require("../utils/encryptionUtils");
+const crypto = require("crypto");
 const path = require("path");
+const fs = require("fs");
+
 exports.getAllEncryptedModels = async (req, res, next) => {
   try {
-    const modelKey = "antispofing.onnx";
-
-    const { modelFile } = await fetchEncryptedFilesFromS3(
-      modelKey
-    );
-    console.log("Decrypted model file:", modelFile);
+    console.log("req recieved-------------");
+    const modelVersions = await fetchModelVersions();
 
     const publicKeyBase64 = req.body.publicKey;
     if (!publicKeyBase64) {
       return res.status(400).json({ message: "Public key is required" });
     }
-    const { encryptedModel, encryptedAesKey, iv } = encryptModel(modelFile, publicKeyBase64);
 
-    const modelHash = await generateModelHash(modelFile); // Add await here
-    console.log("Backend Model hash:", modelHash);
-    const signedHash = signModelHash(modelHash);
-    console.log("Bakend Signed Model hash:", signedHash);
+    const aesKey = crypto.randomBytes(32);
+    const iv = crypto.randomBytes(16);
+    const {encryptedModels,hashes} = await getEncryptedModelsAndHashes(modelVersions, aesKey, iv);
+
+    const signedHash = await combineAndSign(hashes);
+    console.log("Signed hash:", signedHash);
+    const encryptedAesKey = encryptAesKey(aesKey, publicKeyBase64);
+
     res.status(200).json({
-      message: "Model encrypted and signed successfully",
-      encryptedModel: encryptedModel.toString("base64"),
+      message: "Models encrypted and signed successfully",
+      encryptedModels,
       encryptedAesKey: encryptedAesKey.toString("base64"),
       iv: iv.toString("base64"),
-      signedHash: signedHash,
+      signedCombinedHash: signedHash,
     });
   } catch (error) {
-    console.error("Error fetching and decrypting models:", error);
-    res.status(500).json({ error: "Failed to fetch and decrypt models." });
+    console.error("Error fetching and processing models:", error);
+    res.status(500).json({ error: "Failed to fetch and process models." });
   }
 };
+
 
 exports.getPublicVerificationKey = async (req, res, next) => {
   try {
@@ -44,3 +46,4 @@ exports.getPublicVerificationKey = async (req, res, next) => {
     res.status(500).json({ error: "Failed to fetch public key." });
   }
 }
+

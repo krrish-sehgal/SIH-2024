@@ -11,7 +11,7 @@ const FaceAuthenticationPage = () => {
   const[keyGenerated,setKeyGenerated]=useState(false);
   const[isLoaded,setIsLoaded]=useState(false);
   const[isDecrypted,setIsDecrypted]=useState(false);
-  const[decryptedModel,setDecryptedModel]=useState(null);
+  const[decryptedModels,setDecryptedModels]=useState(null);
   const[cameraPermission,setCameraPermission]=useState(false);
   const checkCameraPermission = async () => {
     try {
@@ -59,7 +59,7 @@ const FaceAuthenticationPage = () => {
   return (
     
     <div className="face-auth-page">
-      <ModelService setDecryptedModel={setDecryptedModel} setIsDecrypted={setIsDecrypted} setKeyGenerated={setKeyGenerated} setIsLoaded={setIsLoaded}/>
+      <ModelService setDecryptedModels={setDecryptedModels} setIsDecrypted={setIsDecrypted} setKeyGenerated={setKeyGenerated} setIsLoaded={setIsLoaded}/>
       {!showAuthentication ? ((
         <div className="guidelines-box">
           <h2>Face Authentication Guidelines</h2>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import AadhaarAuthenticationPage from "./AadhaarAuthenticationPage";
 import FaceAuthenticationPage from "./FaceAuthenticationPage";
+import FaceAuthToo from "./FaceAuthToo";
 import ProgressBar from "./ProgressBar";
 import "../styles/MainPage.css"
 
@@ -23,7 +24,7 @@ const MainPage = () => {
       case 2:
         return <AadhaarAuthenticationPage onNext={goToNextStep} stepNum={2}/>;
       case 3:
-        return <FaceAuthenticationPage />;
+        return <FaceAuthToo />;
       default:
         return <div>Process Complete</div>;
     }

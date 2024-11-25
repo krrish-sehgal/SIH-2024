@@ -3,7 +3,7 @@ const { getAllEncryptedModels, getPublicVerificationKey } = require("../controll
 
 const router = express.Router();
 
-router.post("/encrypted-model", getAllEncryptedModels);
+router.post("/encrypted-models", getAllEncryptedModels);
 router.get("/public-verification-key", getPublicVerificationKey);
 
 module.exports = router;
