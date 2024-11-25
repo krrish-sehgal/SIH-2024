@@ -145,7 +145,6 @@ const [isDecrypted, setIsDecrypted] = useState(false);
 
       // Add artificial delay to ensure smooth loading animation (optional, remove in production)
       await new Promise(resolve => setTimeout(resolve, 500));
-      console.log("fds");
       const response = await fetch("http://localhost:8000/api/encrypted-models", {
         method: "POST",
         headers: {
@@ -155,7 +154,6 @@ const [isDecrypted, setIsDecrypted] = useState(false);
           publicKey: arrayBufferToBase64(publicKey),
         }),
       });
-      console.log("sa");
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
