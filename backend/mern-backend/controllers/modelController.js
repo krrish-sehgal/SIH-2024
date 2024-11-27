@@ -7,15 +7,20 @@ const fs = require("fs");
 
 exports.getAllEncryptedModels = async (req, res, next) => {
   try {
-    console.log("req recieved-------------");
     const modelVersions = await fetchModelVersions();
 
-    const publicKeyBase64 = req.body.publicKey;
-    if (!publicKeyBase64) {
+    const frontendPublicKeyBase64 = req.body.publicKey;
+    if (!frontendPublicKeyBase64) {
       return res.status(400).json({ message: "Public key is required" });
     }
+    const frontendPublicKey = Buffer.from(frontendPublicKeyBase64, "base64");
 
-    const aesKey = crypto.randomBytes(32);
+    const ecdh = crypto.createECDH("secp256k1");
+    ecdh.generateKeys();
+    const backendEphemeralPublicKey = ecdh.getPublicKey("base64");
+    const sharedSecret = ecdh.computeSecret(frontendPublicKey);
+
+    const aesKey = crypto.createHash("sha256").update(sharedSecret).digest(); 
     const iv = crypto.randomBytes(16);
     const {encryptedModels,hashes} = await getEncryptedModelsAndHashes(modelVersions, aesKey, iv);
 
@@ -28,6 +33,7 @@ exports.getAllEncryptedModels = async (req, res, next) => {
       encryptedModels,
       encryptedAesKey: encryptedAesKey.toString("base64"),
       iv: iv.toString("base64"),
+      backendPublicKey: backendEphemeralPublicKey,
       signedCombinedHash: signedHash,
     });
   } catch (error) {

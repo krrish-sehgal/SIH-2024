@@ -22,41 +22,44 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   const generateKeyPair = async () => {
     setIsGeneratingKeys(true);
     try {
-      // Generate an RSA key pair for encryption and decryption
+      // Step 1: Generate an ECDH key pair
       const keyPair = await window.crypto.subtle.generateKey(
         {
-          name: "RSA-OAEP",
-          modulusLength: 2048,
-          publicExponent: new Uint8Array([1, 0, 1]),
-          hash: { name: "SHA-256" },
+          name: "ECDH",
+          namedCurve: "P-256", // Using P-256 curve (common for ECDH)
         },
         true, // Keys can be exported (extractable)
-        ["encrypt", "decrypt"] // Key usages
+        ["deriveKey", "deriveBits"] // Key usages
       );
-
-      // Export the private key and store it securely in IndexedDB
+  
+      // Step 2: Export the private key and store it securely in IndexedDB
       const exportedPrivateKey = await window.crypto.subtle.exportKey(
         "pkcs8",
         keyPair.privateKey
       );
       await storeKeyInIndexedDB("privateKey", exportedPrivateKey);
-
-      // Export the public key and update state to send it to the backend
+  
+      // Step 3: Export the public key to send it to the backend
       const exportedPublicKey = await window.crypto.subtle.exportKey(
         "spki",
         keyPair.publicKey
       );
-      setPublicKey(exportedPublicKey);
-      
-      console.log("Key pair generated and private key stored securely!");
+  
+      // Convert the public key to a base64 string for easy transfer
+      const publicKeyBase64 = btoa(
+        String.fromCharCode(...new Uint8Array(exportedPublicKey))
+      );
+      setPublicKey(publicKeyBase64);
+  
+      console.log("ECDH key pair generated and private key stored securely!");
     } catch (error) {
-      console.error("Error generating key pair:", error);
+      console.error("Error generating ECDH key pair:", error);
     } finally {
       setIsGeneratingKeys(false);
       setKeyGenerated(true);
-      
     }
   };
+  
 
   // Function to fetch the encrypted model from the backend using the public key
   const loadModel = async () => {
