@@ -4,47 +4,41 @@ const path = require('path');
 
 const verifyModel = async (req, res, next) => {
     try {
-        const { modelHash, digitalSignature, modelData } = req.body;
-        
-        if (!modelHash || !digitalSignature || !modelData) {
+        const { combinedHash, digitalSignature } = req.body; // Expect combinedHash and signature from the frontend
+
+        // Validate inputs
+        if (!combinedHash || !digitalSignature) {
             return res.status(400).json({ 
-                message: "Model hash, digital signature and model data are required" 
+                message: "Combined hash and digital signature are required." 
             });
         }
 
-        // Read public key
         const publicKeyPath = path.join(__dirname, '../digital_signature_keys/public_key.pem');
         const publicKey = await fs.readFile(publicKeyPath, 'utf8');
 
-        // Verify digital signature
-        const verifier = crypto.createVerify('SHA256');
-        verifier.update(modelHash);
-        const isSignatureValid = verifier.verify(publicKey, digitalSignature, 'base64');
+        const hashBuffer = Buffer.from(combinedHash, 'hex');
+
+        const signatureBuffer = Buffer.from(digitalSignature, 'base64');
+
+        const isSignatureValid = crypto.verify(
+            'sha256', 
+            hashBuffer, 
+            publicKey, 
+            signatureBuffer 
+        );
 
         if (!isSignatureValid) {
             return res.status(401).json({ 
-                message: "Invalid digital signature" 
+                message: "Invalid digital signature. Verification failed." 
             });
         }
 
-        // Compute and verify SHA hash
-        const computedHash = crypto
-            .createHash('sha256')
-            .update(JSON.stringify(modelData))
-            .digest('hex');
-
-        if (computedHash !== modelHash) {
-            return res.status(401).json({ 
-                message: "Model hash verification failed" 
-            });
-        }
-
-        req.verifiedModel = modelData;
+        req.verifiedHash = combinedHash; 
         next();
     } catch (error) {
-        console.error('Model verification error:', error);
+        console.error('Error verifying model:', error);
         res.status(500).json({ 
-            message: "Error verifying model",
+            message: "Error verifying model.",
             error: error.message 
         });
     }
