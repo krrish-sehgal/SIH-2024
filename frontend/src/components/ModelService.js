@@ -88,14 +88,14 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       console.log("Decrypting models...");
   
       // Retrieve the private key from IndexedDB
-      const privateKey = await getKeyFromIndexedDB("privateKey");
-      if (!privateKey) {
-        console.error("Private key not found!");
+      const frontendPrivateKey = await getKeyFromIndexedDB("privateKey");
+      if (!frontendPrivateKey) {
+        console.error("Frontend private key not found!");
         return;
       }
   
-      // Decrypt the AES key using the private RSA key
-      const aesKey = await decryptAesKey(privateKey, encryptedAesKey);
+      // Step 2: Generate the AES key using the frontend private key and backend public key
+      const aesKey = await generateAesKey(frontendPrivateKey, backendEphemeralPublicKey);
   
       // Array to store decrypted models
       const decryptedModels = [];
