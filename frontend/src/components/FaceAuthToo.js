@@ -14,7 +14,7 @@ const FaceAuthenticationPage = () => {
   const[isDecrypted,setIsDecrypted]=useState(false);
   const[decryptedModels,setDecryptedModels]=useState(null);
   const[cameraPermission,setCameraPermission]=useState(false);
-  const[models,setModels]=useState(null);
+  const[reVerify,setReVerify]=useState(false);
   const checkCameraPermission = async () => {
 
     try {
@@ -31,18 +31,7 @@ const FaceAuthenticationPage = () => {
     
     }
   };
-  const handleFaceCapture = () => {
-   
-    const screenshot = webcamRef.current.getScreenshot();
-    console.log("Captured Image:", screenshot);
-   
-    const isAuthenticated = true; 
-    alert(
-      isAuthenticated
-        ? "Face authenticated successfully!"
-        : "Authentication failed. Please try again."
-    );
-  };
+
 
   const handleProceed = () => {
     if (guidelinesAccepted&&cameraPermission) {
@@ -62,7 +51,7 @@ const FaceAuthenticationPage = () => {
   return (
     
     <div className="face-auth-page">
-      <ModelService setDecryptedModels={setDecryptedModels} setIsDecrypted={setIsDecrypted} setKeyGenerated={setKeyGenerated} setIsLoaded={setIsLoaded}/>
+      <ModelService setDecryptedModels={setDecryptedModels} reVerify={reVerify}  setReVerify={setReVerify} setIsDecrypted={setIsDecrypted} setKeyGenerated={setKeyGenerated} setIsLoaded={setIsLoaded}/>
       {!showAuthentication ? ((
         <div className="guidelines-box">
           <h2>Face Authentication Guidelines</h2>
@@ -82,7 +71,7 @@ const FaceAuthenticationPage = () => {
           <button onClick={handleProceed}>Proceed</button>
         </div>
       )) :(!isDecrypted)?<Loading/>: (
-        <FaceDetection models={decryptedModels}/>
+        <FaceDetection models={decryptedModels} setReVerify={setReVerify}/>
       )}
     </div>
   );

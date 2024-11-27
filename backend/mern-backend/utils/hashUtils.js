@@ -6,6 +6,7 @@ const { fetchPrivateKeyFromS3 } = require("./s3utils");
 
 async function combineAndSign(hashes) {
   try {
+    //console.log(hashes);
     const combinedHash = crypto.createHash("sha256").update(Buffer.concat(hashes)).digest();
     console.log(`Combined hash: ${combinedHash.toString("hex")}`);
 

@@ -12,8 +12,8 @@ async function processModel(modelName, modelVersion, aesKey, iv) {
     console.log("modelFile", modelFile);
     const encryptedModel = encryptModel(modelFile, aesKey, iv);
 
-    const modelHash = await generateModelHash(modelFile);
-    
+    //const modelHash = await generateModelHash(modelFile);
+
     return {
       modelName,
       encryptedModel: encryptedModel.toString("base64"),
@@ -43,7 +43,7 @@ async function getEncryptedModelsAndHashes(modelVersions, aesKey, iv) {
         encryptedModel,
         version,
       });
-  
+      console.log(modelHash);
       hashes.push(modelHash);
       
     }
