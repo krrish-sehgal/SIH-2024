@@ -111,40 +111,58 @@ const [isDecrypted, setIsDecrypted] = useState(false);
     } 
 
   };
-  
   const generateAesKey = async (frontendPrivateKey, backendPublicKeyBase64) => {
     try {
-      // Step 1: Import the backend public key
+      // Step 1: Convert the backend public key from base64 to a raw format
       const backendPublicKeyBuffer = Uint8Array.from(
         atob(backendPublicKeyBase64),
         (c) => c.charCodeAt(0)
       );
+  
+      // Step 2: Import the backend public key for ECDH key exchange
       const backendPublicKey = await window.crypto.subtle.importKey(
-        "spki",
+        "raw", // Import the public key as raw bytes for ECDH
         backendPublicKeyBuffer,
-        { name: "ECDH", namedCurve: "P-256" },
-        false,
-        []
+        { name: "ECDH", namedCurve: "P-256" }, // Specify the curve used
+        false, // The key is not extractable
+        [] // No specific usages, just for ECDH
       );
   
-      // Step 2: Derive the shared secret
+      // Step 3: Derive the shared secret using the frontend private key and the backend public key
       const sharedSecret = await window.crypto.subtle.deriveBits(
         {
           name: "ECDH",
           public: backendPublicKey,
         },
-        frontendPrivateKey,
-        256 // Length of the output in bits
+        frontendPrivateKey, // Use the frontend private key
+        256 // Length of the output in bits (to match AES key size)
       );
   
-      // Step 3: Derive the AES key from the shared secret
+      // Step 4: Export the shared secret as raw data
+      const sharedSecretArrayBuffer = sharedSecret;
+  
+      // Hash the shared secret like the backend does
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', sharedSecretArrayBuffer);
+      
+      // Use the hashed value as AES key
       const aesKey = await window.crypto.subtle.importKey(
         "raw",
-        sharedSecret,
+        hashBuffer,
         { name: "AES-CBC" },
-        false,
-        ["decrypt"]
+        true,
+        ["encrypt", "decrypt"]
       );
+  
+      console.log("AES key generated successfully!");
+  
+      // Step 6: Export the AES key to verify its raw content
+      const exportedKey = await window.crypto.subtle.exportKey("raw", aesKey);
+  
+      // Convert the AES key to a hexadecimal string for logging
+      const aesKeyHex = Array.from(new Uint8Array(exportedKey))
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('');
+      console.log("AES Key in Hex:", aesKeyHex);
   
       return aesKey;
     } catch (error) {
@@ -152,6 +170,8 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       throw error;
     }
   };
+  
+  
 
 
 

@@ -24,10 +24,11 @@ exports.getAllEncryptedModels = async (req, res, next) => {
     const backendEphemeralPublicKey = ecdh.getPublicKey('base64'); 
     const sharedSecret = ecdh.computeSecret(frontendPublicKey);
 
+    // Creates AES key by hashing the shared secret
     const aesKey = crypto.createHash("sha256").update(sharedSecret).digest(); 
     const iv = crypto.randomBytes(16);
     const {encryptedModels,hashes} = await getEncryptedModelsAndHashes(modelVersions, aesKey, iv);
-
+    console.log("AES Key (Hex):", aesKey.toString('hex'));
     const signedHash = await combineAndSign(hashes);
     console.log("Signed hash:", signedHash);
     
