@@ -111,7 +111,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
     } 
 
   };
-
+  
   const generateAesKey = async (frontendPrivateKey, backendPublicKeyBase64) => {
     try {
       // Step 1: Import the backend public key
@@ -167,7 +167,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
         console.error("Frontend private key not found!");
         return;
       }
-  
+      console.log(frontendPrivateKey);
       // Step 2: Generate the AES key using the frontend private key and backend public key
       const aesKey = await generateAesKey(frontendPrivateKey, backendPublicKey);
   
@@ -209,7 +209,6 @@ const [isDecrypted, setIsDecrypted] = useState(false);
           publicKey: frontendPublicKey, // Send the frontend's public key to the backend
         }),
       });
-  
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -221,7 +220,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
         ivLength: data.iv?.length
       });
   
-      if (data.encryptedModels && data.encryptedAesKey && data.iv && data.signedCombinedHash) {
+      if (data.encryptedModels && data.backendPublicKey && data.iv && data.signedCombinedHash) {
         // Store the backend's public key for later use in DHKE
         const backendPublicKeyBase64 = data.backendPublicKey; // Ensure the backend sends this public key
         storeBackendPublicKey(backendPublicKeyBase64); // Store the public key securely, e.g., in state
@@ -276,36 +275,41 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   // Helper function to retrieve the private key from IndexedDB
   const getKeyFromIndexedDB = async (keyName) => {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open("SecureKeysDB", 1);
+        const request = indexedDB.open("SecureKeysDB", 1);
 
-      request.onsuccess = (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction("keys", "readonly");
-        const store = transaction.objectStore("keys");
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction("keys", "readonly");
+            const store = transaction.objectStore("keys");
 
-        const keyRequest = store.get(keyName);
-        keyRequest.onsuccess = async () => {
-          const keyData = keyRequest.result;
-          if (keyName === "privateKey") {
-            // Only import as CryptoKey if it's the private key
-            const privateKey = await window.crypto.subtle.importKey(
-              "pkcs8",
-              keyData,
-              { name: "RSA-OAEP", hash: "SHA-256" },
-              true,
-              ["decrypt"]
-            );
-            resolve(privateKey);
-          } else {
-            resolve(keyData); // Return raw data for other keys
-          }
+            const keyRequest = store.get(keyName);
+            keyRequest.onsuccess = async () => {
+                const keyData = keyRequest.result;
+                if (keyName === "privateKey") {
+                    try {
+                        // Import the private key for ECDH
+                        const privateKey = await window.crypto.subtle.importKey(
+                            "pkcs8",
+                            keyData,
+                            { name: "ECDH", namedCurve: "P-256" },
+                            true,
+                            ["deriveKey", "deriveBits"]
+                        );
+                        resolve(privateKey);
+                    } catch (error) {
+                        reject(`Failed to import private key: ${error}`);
+                    }
+                } else {
+                    resolve(keyData); // Return raw data for other keys
+                }
+            };
+            keyRequest.onerror = () => reject(keyRequest.error);
         };
-        keyRequest.onerror = () => reject(keyRequest.error);
-      };
 
-      request.onerror = () => reject(request.error);
+        request.onerror = () => reject(request.error);
     });
-  };
+};
+
 
   // Function to decrypt the AES key using the RSA private key
   const decryptAesKey = async (privateKey, encryptedAesKeyBase64) => {
