@@ -28,44 +28,42 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   const generateKeyPair = async () => {
     setIsGeneratingKeys(true);
     try {
-      // Step 1: Generate an ECDH key pair
-      const keyPair = await window.crypto.subtle.generateKey(
-        {
-          name: "ECDH",
-          namedCurve: "P-256", // Using P-256 curve (common for ECDH)
-        },
-        true, // Keys can be exported (extractable)
-        ["deriveKey", "deriveBits"] // Key usages
-      );
-  
-      // Step 2: Export the private key and store it securely in IndexedDB
-      const exportedPrivateKey = await window.crypto.subtle.exportKey(
-        "pkcs8",
-        keyPair.privateKey
-      );
-      await storeKeyInIndexedDB("privateKey", exportedPrivateKey);
-  
-      // Step 3: Export the public key to send it to the backend
-      const exportedPublicKey = await window.crypto.subtle.exportKey(
-        "spki",
-        keyPair.publicKey
-      );
-  
-      // Convert the public key to a base64 string for easy transfer
-      const publicKeyBase64 = btoa(
-        String.fromCharCode(...new Uint8Array(exportedPublicKey))
-      );
-      console.log(publicKeyBase64);
-      setFrontendPublicKey(publicKeyBase64);
-      setKeyGenerated(true);
-      console.log("ECDH key pair generated and private key stored securely!");
+        // Step 1: Generate an ECDH key pair
+        const keyPair = await window.crypto.subtle.generateKey(
+            {
+                name: "ECDH",
+                namedCurve: "P-256", // Use P-256 curve for ECDH
+            },
+            true, // Keys can be exported (extractable)
+            ["deriveKey", "deriveBits"] // Key usages
+        );
+
+        // Step 2: Export the private key and store it securely in IndexedDB
+        const exportedPrivateKey = await window.crypto.subtle.exportKey(
+            "pkcs8",
+            keyPair.privateKey
+        );
+        await storeKeyInIndexedDB("privateKey", exportedPrivateKey);
+
+        // Step 3: Export the public key to send it to the backend
+        const exportedPublicKey = await window.crypto.subtle.exportKey(
+            "raw", // Export the raw public key for ECDH
+            keyPair.publicKey
+        );
+
+        // Convert the public key to a base64 string for easy transfer
+        const publicKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(exportedPublicKey)));
+        console.log(publicKeyBase64);
+        setFrontendPublicKey(publicKeyBase64);
+        setKeyGenerated(true);
+        console.log("ECDH key pair generated and private key stored securely!");
     } catch (error) {
-      console.error("Error generating ECDH key pair:", error);
+        console.error("Error generating ECDH key pair:", error);
     } finally {
-      setIsGeneratingKeys(false);
-      
+        setIsGeneratingKeys(false);
     }
-  };
+};
+
   
 
   // Function to fetch the encrypted model from the backend using the public key

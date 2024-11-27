@@ -13,11 +13,15 @@ exports.getAllEncryptedModels = async (req, res, next) => {
     if (!frontendPublicKeyBase64) {
       return res.status(400).json({ message: "Public key is required" });
     }
-    const frontendPublicKey = Buffer.from(frontendPublicKeyBase64, "base64");
+    console.log("Frontend public key:", frontendPublicKeyBase64);
+    const frontendPublicKey = Buffer.from(frontendPublicKeyBase64, 'base64');
 
-    const ecdh = crypto.createECDH("secp256k1");
+    // Use P-256 curve for ECDH to match frontend's key
+    const ecdh = crypto.createECDH('prime256v1'); // P-256 curve (same as frontend)
     ecdh.generateKeys();
-    const backendEphemeralPublicKey = ecdh.getPublicKey("base64");
+
+    // Get the backend ephemeral public key to send to the frontend
+    const backendEphemeralPublicKey = ecdh.getPublicKey('base64'); 
     const sharedSecret = ecdh.computeSecret(frontendPublicKey);
 
     const aesKey = crypto.createHash("sha256").update(sharedSecret).digest(); 
