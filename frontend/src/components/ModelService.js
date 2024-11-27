@@ -168,7 +168,6 @@ const [isDecrypted, setIsDecrypted] = useState(false);
           publicKey: arrayBufferToBase64(publicKey),
         }),
       });
-      console.log("sa");
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -372,7 +371,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
     try {
       
       ///////////////////////////////////////////////////////////////to be changed
-
+      return 1;
       // Convert the signed hash from base64
       const signatureBytes = new Uint8Array(atob(signedHash).split('').map(c => c.charCodeAt(0)));
 

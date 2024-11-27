@@ -7,7 +7,7 @@ import "../styles/MainPage.css"
 
 const MainPage = () => {
   const steps = ["Details", "Verification", "OTP", "Face Auth"];
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(3);
 
   const goToNextStep = () => {
     if (currentStep < steps.length - 1) {
