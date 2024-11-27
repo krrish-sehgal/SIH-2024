@@ -26,12 +26,11 @@ exports.getAllEncryptedModels = async (req, res, next) => {
 
     const signedHash = await combineAndSign(hashes);
     console.log("Signed hash:", signedHash);
-    const encryptedAesKey = encryptAesKey(aesKey, publicKeyBase64);
+    
 
     res.status(200).json({
       message: "Models encrypted and signed successfully",
       encryptedModels,
-      encryptedAesKey: encryptedAesKey.toString("base64"),
       iv: iv.toString("base64"),
       backendPublicKey: backendEphemeralPublicKey,
       signedCombinedHash: signedHash,

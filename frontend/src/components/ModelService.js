@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 
 function ModelService(props) {
   // State variables for managing keys, model data, and UI loading states
-  const [publicKey, setPublicKey] = useState(null); // Stores the public RSA key
+  const [frontendPublicKey, setFrontendPublicKey] = useState(null); // Stores the public RSA key
   const [encryptedModels, setEncryptedModels] = useState(null); // Encrypted ML model data
   const [encryptedAesKey, setEncryptedAesKey] = useState(null); // Encrypted AES key
   const [iv, setIv] = useState(null); // Initialization Vector for AES decryption
@@ -17,6 +17,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const[backendPublicKey,setBackendPublicKey] =useState(null);
   const [isVerified,setIsVerified]=useState(false);
   const encryptedModelsURL = process.env.REACT_APP_MODELSURL;
   const verificationKeyURL=process.env.REACT_APP_VERIFICATIONURL;
@@ -54,14 +55,15 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       const publicKeyBase64 = btoa(
         String.fromCharCode(...new Uint8Array(exportedPublicKey))
       );
-      setPublicKey(publicKeyBase64);
-  
+      console.log(publicKeyBase64);
+      setFrontendPublicKey(publicKeyBase64);
+      setKeyGenerated(true);
       console.log("ECDH key pair generated and private key stored securely!");
     } catch (error) {
       console.error("Error generating ECDH key pair:", error);
     } finally {
       setIsGeneratingKeys(false);
-      setKeyGenerated(true);
+      
     }
   };
   
@@ -70,12 +72,12 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   const loadModel = async () => {
     setIsLoadingModel(true);
     try {
-      if (!publicKey) {
+      if (!frontendPublicKey) {
         throw new Error("Please generate key pair first!");
       }
 
       // Fetch encrypted model data from the backend
-      await fetchEncryptedModel(publicKey);
+      await fetchEncryptedModel();
 
       setModelsLoaded(true);
     } catch (error) {
@@ -111,6 +113,50 @@ const [isDecrypted, setIsDecrypted] = useState(false);
     } 
 
   };
+
+  const generateAesKey = async (frontendPrivateKey, backendPublicKeyBase64) => {
+    try {
+      // Step 1: Import the backend public key
+      const backendPublicKeyBuffer = Uint8Array.from(
+        atob(backendPublicKeyBase64),
+        (c) => c.charCodeAt(0)
+      );
+      const backendPublicKey = await window.crypto.subtle.importKey(
+        "spki",
+        backendPublicKeyBuffer,
+        { name: "ECDH", namedCurve: "P-256" },
+        false,
+        []
+      );
+  
+      // Step 2: Derive the shared secret
+      const sharedSecret = await window.crypto.subtle.deriveBits(
+        {
+          name: "ECDH",
+          public: backendPublicKey,
+        },
+        frontendPrivateKey,
+        256 // Length of the output in bits
+      );
+  
+      // Step 3: Derive the AES key from the shared secret
+      const aesKey = await window.crypto.subtle.importKey(
+        "raw",
+        sharedSecret,
+        { name: "AES-CBC" },
+        false,
+        ["decrypt"]
+      );
+  
+      return aesKey;
+    } catch (error) {
+      console.error("Error generating AES key:", error);
+      throw error;
+    }
+  };
+
+
+
   // Function to decrypt the model using the private key and AES decryption
   const decryptModels = async () => {
     setIsDecrypting(true);
@@ -125,7 +171,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       }
   
       // Step 2: Generate the AES key using the frontend private key and backend public key
-      const aesKey = await generateAesKey(frontendPrivateKey, backendEphemeralPublicKey);
+      const aesKey = await generateAesKey(frontendPrivateKey, backendPublicKey);
   
       // Array to store decrypted models
       const decryptedModelsList = [];
@@ -153,46 +199,41 @@ const [isDecrypted, setIsDecrypted] = useState(false);
     }
   };
 
-  // Function to fetch encrypted model data from the backend
-  const fetchEncryptedModel = async (publicKey) => {
-    try {
-      const publicKeyBase64 = arrayBufferToBase64(publicKey);
-      console.log("Sending public key:", publicKeyBase64.substring(0, 64) + "...");
 
-      // Add artificial delay to ensure smooth loading animation (optional, remove in production)
-      await new Promise(resolve => setTimeout(resolve, 500));
-      console.log("fds");
+  const fetchEncryptedModel = async () => {
+    try {
       const response = await fetch(encryptedModelsURL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          publicKey: arrayBufferToBase64(publicKey),
+          publicKey: frontendPublicKey, // Send the frontend's public key to the backend
         }),
       });
-
+  
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+  
       const data = await response.json();
       console.log("Received encrypted data lengths:", {
         models: data.encryptedModels?.length,
-        keyLength: data.encryptedAesKey?.length,
+        keyLength: data.backendPublicKey?.length,
         ivLength: data.iv?.length
       });
-
+  
       if (data.encryptedModels && data.encryptedAesKey && data.iv && data.signedCombinedHash) {
-
+        // Store the backend's public key for later use in DHKE
+        const backendPublicKeyBase64 = data.backendPublicKey; // Ensure the backend sends this public key
+        storeBackendPublicKey(backendPublicKeyBase64); // Store the public key securely, e.g., in state
+  
         // Add small delay before updating state to ensure smooth transition
-
         await new Promise(resolve => setTimeout(resolve, 200));
         setEncryptedModels(data.encryptedModels);
-        setEncryptedAesKey(data.encryptedAesKey);
         setIv(data.iv);
         setSignedHash(data.signedCombinedHash); // Store in state instead of IndexedDB
-
+  
       } else {
         throw new Error("Failed to fetch encrypted model: " + (data.message || "Unknown error"));
       }
@@ -201,8 +242,12 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       throw error; // Re-throw to be caught by loadModel
     }
   };
-
-
+  
+  // Function to store the backend's public key in state (or IndexedDB)
+  const storeBackendPublicKey = (publicKeyBase64) => {
+    // Assuming you are using state to store the backend's public key
+    setBackendPublicKey(publicKeyBase64);
+  };
 
   // Helper function to store the private key securely in IndexedDB
   const storeKeyInIndexedDB = async (keyName, keyData) => {
