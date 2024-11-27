@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import Webcam from "react-webcam";
 const YOLO_MODEL_PATH = 'yolo-face-detection.onnx';
 const ANTISPOOF_MODEL_PATH = 'antispoofing.onnx';
-const FaceDetection = ({ models }) => {
+const FaceDetection = ({ models ,setReVerify}) => {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -26,6 +26,7 @@ const FaceDetection = ({ models }) => {
         setYoloModel(yoloSession);
         setAntispoofModel(antispoofSession);
         setOutput("Models loaded. Ready for face authentication.");
+        
       } catch (error) {
         console.error("Error loading models:", error);
         setOutput("Failed to load models. Check console for details.");
@@ -99,14 +100,21 @@ const FaceDetection = ({ models }) => {
 
       const spoofProbability = antispoofResults.output.data[0];
       const probability = sigmoid(spoofProbability);
-
-      setOutput(probability > 0.3 ? "Real face detected" : "Spoof detected");
+      if(probability>0.3){
+        setOutput("Real face detected" );
+      }
+      else{
+        setOutput("Spoof Detected, Try Again!!" );
+        setReVerify(true);
+      }
+      
+      
     } catch (error) {
       console.error("Error running models:", error);
       setOutput("Error running models. Check console for details.");
     }
   };
-
+  
   return (
     <div className="auth-container">
       <div className="auth-column">
@@ -122,9 +130,10 @@ const FaceDetection = ({ models }) => {
               facingMode: "user",
             }}
           />
+          <img className="overlay-circle" src={`face-${(output=="Models loaded. Ready for face authentication."||output=="Loading models...")?"mid":(output=="Real face detected"?"accepted":"rejected")}.png`} alt="Overlay" />
           <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
-        <button onClick={handleFaceCapture}>Authenticate Face</button>
+        <button onClick={handleFaceCapture}>{(output=="Spoof Detected, Try Again!!"?"Retry":"Authenticate Face")}</button>
         <p>{output}</p>
       </div>
       <div className="example-column">

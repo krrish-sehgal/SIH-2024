@@ -17,6 +17,11 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isVerified,setIsVerified]=useState(false);
+  const encryptedModelsURL = process.env.REACT_APP_MODELSURL;
+  const verificationKeyURL=process.env.REACT_APP_VERIFICATIONURL;
+  console.log(encryptedModelsURL);
+  
 
   // Function to generate RSA key pair and securely store the private key
   const generateKeyPair = async () => {
@@ -77,7 +82,32 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       
     }
   };
+  const verifyModels =async () =>{
+    // Generate combined hash of all decrypted models
+    try{
+    const combinedHash = await generateCombinedHash(
+      decryptedModels.map((model) => model.decryptedModel)
+    );
+    console.log("combinedhash");
+    console.log(combinedHash);
 
+    // Verify the combined signed hash
+    const publicVerificationKey = await fetchPublicVerificationKey();
+    console.log(publicVerificationKey);
+    if (await verifySignedHash(combinedHash, signedHash, publicVerificationKey)) {
+      console.log("All models verified successfully!");
+      setIsVerified(true);
+      
+      
+    } else {
+      console.error("Model verification failed, aborting decryption.");
+      setModelsLoaded(false);
+    }}
+    catch(error){
+      console.error("Error Verifying models:", error);
+    } 
+
+  };
   // Function to decrypt the model using the private key and AES decryption
   const decryptModels = async () => {
     setIsDecrypting(true);
@@ -95,7 +125,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       const aesKey = await decryptAesKey(privateKey, encryptedAesKey);
   
       // Array to store decrypted models
-      const decryptedModels = [];
+      const decryptedModelsList = [];
   
       // Iterate through each encrypted model in the array
       for (const model of encryptedModels) {
@@ -105,31 +135,14 @@ const [isDecrypted, setIsDecrypted] = useState(false);
         const decryptedBuffer = await decryptWithAes(aesKey, encryptedModel, iv);
   
         // Store the decrypted model along with its metadata
-        decryptedModels.push({
+        decryptedModelsList.push({
           modelName,
           decryptedModel: decryptedBuffer,
           version,
         });
       }
-     
-      // Generate combined hash of all decrypted models
-      const combinedHash = await generateCombinedHash(
-        decryptedModels.map((model) => model.decryptedModel)
-      );
-      console.log("combinedhash");
-      console.log(combinedHash);
-  
-      // Verify the combined signed hash
-      const publicVerificationKey = await fetchPublicVerificationKey();
-      console.log(publicVerificationKey);
-      if (await verifySignedHash(combinedHash, signedHash, publicVerificationKey)) {
-        console.log("All models verified successfully!");
-        setDecryptedModels(decryptedModels);
-        setIsDecrypted(true);
-        setModelsLoaded(decryptedModels);
-      } else {
-        console.error("Model verification failed, aborting decryption.");
-      }
+      setDecryptedModels(decryptedModelsList);
+      setIsDecrypted(true);
     } catch (error) {
       console.error("Error decrypting models:", error);
     } finally {
@@ -146,7 +159,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       // Add artificial delay to ensure smooth loading animation (optional, remove in production)
       await new Promise(resolve => setTimeout(resolve, 500));
       console.log("fds");
-      const response = await fetch("http://localhost:8000/api/encrypted-models", {
+      const response = await fetch(encryptedModelsURL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -302,7 +315,7 @@ const [isDecrypted, setIsDecrypted] = useState(false);
 
   async function fetchPublicVerificationKey() {
     try {
-      const response = await fetch('http://localhost:8000/api/public-verification-key');
+      const response = await fetch(verificationKeyURL);
       if (!response.ok) {
         throw new Error("Failed to fetch public key.");
       }
@@ -357,8 +370,9 @@ const [isDecrypted, setIsDecrypted] = useState(false);
 
   async function verifySignedHash(originalHash, signedHash, publicKey) {
     try {
+      
       ///////////////////////////////////////////////////////////////to be changed
-      return 1;
+
       // Convert the signed hash from base64
       const signatureBytes = new Uint8Array(atob(signedHash).split('').map(c => c.charCodeAt(0)));
 
@@ -507,15 +521,28 @@ function arrayBufferToHex(buffer) {
   // Main component rendering the application UI
   useEffect(
                 ()=>{
-                console.log(keyGenerated,modelsLoaded,isDecrypted,decryptedModels);
+                
                 props.setKeyGenerated(keyGenerated) ;
                 props.setIsLoaded(modelsLoaded);
                 props.setIsDecrypted(isDecrypted);
+                
+                console.log(keyGenerated,modelsLoaded,isDecrypted,decryptedModels,props.reVerify);
                 if(!keyGenerated){
                 generateKeyPair();}
                 if(keyGenerated&&!modelsLoaded){loadModel(); }
-                (modelsLoaded&&!isDecrypted)&&decryptModels();
-                isDecrypted&&(props.setDecryptedModels(decryptedModels));},[keyGenerated, modelsLoaded, isDecrypted, decryptedModels]);
+                if(props.reVerify){setIsVerified(false);
+
+                }
+                if(modelsLoaded&&!isDecrypted){decryptModels()};
+                if(isDecrypted&&!isVerified){
+                  verifyModels();
+                }
+                if(isDecrypted&&isVerified){(
+                  props.setDecryptedModels(decryptedModels));
+                  if (props.reVerify) {
+                    props.setReVerify(false); // Assuming setReVerify is passed as a prop
+                }
+                }},[keyGenerated, modelsLoaded, isDecrypted,isVerified,props.reVerify]);
 }
 
 export default ModelService;
