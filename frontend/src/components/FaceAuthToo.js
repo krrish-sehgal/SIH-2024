@@ -11,7 +11,7 @@ const FaceAuthenticationPage = () => {
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
   const[keyGenerated,setKeyGenerated]=useState(false);
   const[isLoaded,setIsLoaded]=useState(false);
-  const[isDecrypted,setIsDecrypted]=useState(false);
+  const[modelReady,setModelReady]=useState(false);
   const[decryptedModels,setDecryptedModels]=useState(null);
   const[cameraPermission,setCameraPermission]=useState(false);
   const[reVerify,setReVerify]=useState(false);
@@ -51,7 +51,7 @@ const FaceAuthenticationPage = () => {
   return (
     
     <div className="face-auth-page">
-      <ModelService setDecryptedModels={setDecryptedModels} reVerify={reVerify}  setReVerify={setReVerify} setIsDecrypted={setIsDecrypted} setKeyGenerated={setKeyGenerated} setIsLoaded={setIsLoaded}/>
+      <ModelService setDecryptedModels={setDecryptedModels} reVerify={reVerify}  setReVerify={setReVerify} setModelReady={setModelReady} setKeyGenerated={setKeyGenerated} setIsLoaded={setIsLoaded}/>
       {!showAuthentication ? ((
         <div className="guidelines-box">
           <h2>Face Authentication Guidelines</h2>
@@ -70,7 +70,7 @@ const FaceAuthenticationPage = () => {
           </label>
           <button onClick={handleProceed}>Proceed</button>
         </div>
-      )) :(!isDecrypted)?<Loading/>: (
+      )) :(!modelReady)?<Loading/>: (
         <FaceDetection models={decryptedModels} setReVerify={setReVerify}/>
       )}
     </div>

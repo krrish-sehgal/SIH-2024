@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState ,useRef } from "react";
 
 
 function ModelService(props) {
@@ -12,6 +12,7 @@ function ModelService(props) {
   const [signedHash, setSignedHash] = useState(null); // State for signed hash
 const [keyGenerated, setKeyGenerated] = useState(false);
 const [isDecrypted, setIsDecrypted] = useState(false);
+const [forceUpdate, setForceUpdate] = useState(false);
   // Loading indicators for UI feedback during asynchronous operations
   const [isGeneratingKeys, setIsGeneratingKeys] = useState(false);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
@@ -19,8 +20,12 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const[backendPublicKey,setBackendPublicKey] =useState(null);
   const [isVerified,setIsVerified]=useState(false);
+  const [foundModel,setFoundModel]=useState(false);
+  const modelStatus=useRef(1);
+  const hasInitialized = useRef(false);
   const encryptedModelsURL = process.env.REACT_APP_MODELSURL;
-  const verificationKeyURL=process.env.REACT_APP_VERIFICATIONURL;
+  const verificationURL=process.env.REACT_APP_VERIFICATIONURL;
+
   console.log(encryptedModelsURL);
   
 
@@ -88,26 +93,31 @@ const [isDecrypted, setIsDecrypted] = useState(false);
   const verifyModels =async () =>{
     // Generate combined hash of all decrypted models
     try{
+ 
     const combinedHash = await generateCombinedHash(
       decryptedModels.map((model) => model.decryptedModel)
     );
     console.log("combinedhash");
     console.log(combinedHash);
-
+    
     // Verify the combined signed hash
-    const publicVerificationKey = await fetchPublicVerificationKey();
-    console.log(publicVerificationKey);
-    if (await verifySignedHash(combinedHash, signedHash, publicVerificationKey)) {
+    
+    if (await verifySignedHash(combinedHash, signedHash)) {
       console.log("All models verified successfully!");
       setIsVerified(true);
       
       
     } else {
-      console.error("Model verification failed, aborting decryption.");
-      setModelsLoaded(false);
+      modelStatus.current =0;
+      console.log("Model verification failed, aborting decryption.");
+      if(modelsLoaded){setModelsLoaded(false);}
+      else(setForceUpdate((prev) => !prev));
+          
+
     }}
     catch(error){
-      console.error("Error Verifying models:", error);
+      console.log("Error Verifying models:", error);
+      modelStatus.current =0;
     } 
 
   };
@@ -208,6 +218,11 @@ const [isDecrypted, setIsDecrypted] = useState(false);
           version,
         });
       }
+      storeDecryptedModels(decryptedModelsList)
+  .then(() => console.log("Models successfully stored in IndexedDB."))
+  .catch((err) => console.error("Error storing models:", err));
+
+      
       setDecryptedModels(decryptedModelsList);
       setIsDecrypted(true);
     } catch (error) {
@@ -216,7 +231,11 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       setIsDecrypting(false);
     }
   };
-
+  
+  const checkModelsInLocalStorage = () => {
+    const storedModels = localStorage.getItem("decryptedModels");
+    return storedModels ? JSON.parse(storedModels) : null;
+  };  
 
   const fetchEncryptedModel = async () => {
     try {
@@ -243,8 +262,9 @@ const [isDecrypted, setIsDecrypted] = useState(false);
       if (data.encryptedModels && data.backendPublicKey && data.iv && data.signedCombinedHash) {
         // Store the backend's public key for later use in DHKE
         const backendPublicKeyBase64 = data.backendPublicKey; // Ensure the backend sends this public key
+        storeSignedHash(data.signedCombinedHash);
         storeBackendPublicKey(backendPublicKeyBase64); // Store the public key securely, e.g., in state
-  
+        
         // Add small delay before updating state to ensure smooth transition
         await new Promise(resolve => setTimeout(resolve, 200));
         setEncryptedModels(data.encryptedModels);
@@ -382,20 +402,6 @@ const [isDecrypted, setIsDecrypted] = useState(false);
     }
   };
 
-  async function fetchPublicVerificationKey() {
-    try {
-      const response = await fetch(verificationKeyURL);
-      if (!response.ok) {
-        throw new Error("Failed to fetch public key.");
-      }
-      const data = await response.json();
-      console.log("Received public key data:", data); // Debug log
-      return await importPublicKey(data.publicKey);
-    } catch (error) {
-      console.error("Error fetching public key:", error);
-      throw error;
-    }
-  }
 
   async function importPublicKey(pemKey) {
     try {
@@ -437,24 +443,161 @@ const [isDecrypted, setIsDecrypted] = useState(false);
     }
   }
 
-  async function verifySignedHash(originalHash, signedHash, publicKey) {
+  const storeSignedHash = async (signedHash) => {
+    const db = await initializeModelDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction("signedHash", "readwrite");
+      const store = transaction.objectStore("signedHash");
+  
+      store.put({ id: "signedHash", data: signedHash }); 
+  
+      transaction.oncomplete = () => {
+        console.log("Signed Hash stored successfully.");
+        resolve();
+      };
+  
+      transaction.onerror = (event) => {
+        console.error("Error storing Signed Hash:", event.target.error);
+        reject(event.target.error);
+      };
+    });
+  };
+
+// Function to fetch signedCache from IndexedDB
+const fetchSignedHash = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('DecryptedModelsDB', 2);
+
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      // Check if the object store exists
+      if (!db.objectStoreNames.contains('signedHash')) {
+        console.warn('signedHash object store does not exist.');
+        resolve(null);
+        return;
+      }
+
+      const transaction = db.transaction(['signedHash'], 'readonly');
+      const store = transaction.objectStore('signedHash');
+      const getRequest = store.get('signedHash');
+
+      getRequest.onsuccess = (event) => {
+        const result = event.target.result;
+        resolve(result ? result.data : null);
+      };
+
+      getRequest.onerror = (event) => {
+        reject('Error fetching signed hash:', event.target.error);
+      };
+    };
+
+    request.onerror = (event) => {
+      reject('Error opening IndexedDB:', event.target.error);
+    };
+  });
+};
+  
+  const initializeModelDB = () => {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open("DecryptedModelsDB", 2);
+  
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains("decryptedModels")) {
+          db.createObjectStore("decryptedModels", { keyPath: "id" });
+          
+        }
+        if (!db.objectStoreNames.contains("signedHash")) {
+          db.createObjectStore("signedHash", { keyPath: "id" });
+        }
+      };
+  
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+  
+      request.onerror = (event) => {
+        console.error("Error initializing IndexedDB:", event.target.error);
+        reject(event.target.error);
+      };
+    });
+  };
+  const storeDecryptedModels = async (models) => {
+    const db = await initializeModelDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction("decryptedModels", "readwrite");
+      const store = transaction.objectStore("decryptedModels");
+  
+      store.put({ id: "allModels", data: models }); // Save models under "allModels"
+  
+      transaction.oncomplete = () => {
+        console.log("Decrypted models stored successfully.");
+        resolve();
+      };
+  
+      transaction.onerror = (event) => {
+        console.error("Error storing decrypted models:", event.target.error);
+        reject(event.target.error);
+      };
+    });
+  };
+  const getDecryptedModels = async () => {
+    const db = await initializeModelDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction("decryptedModels", "readonly");
+      const store = transaction.objectStore("decryptedModels");
+  
+      const request = store.get("allModels");
+  
+      request.onsuccess = (event) => {
+        if (request.result) {
+          console.log("Decrypted models retrieved successfully.");
+          resolve(request.result.data); // Return the stored models
+        } else {
+          console.warn("No decrypted models found in IndexedDB.");
+          resolve(null);
+        }
+      };
+  
+      request.onerror = (event) => {
+        console.error("Error retrieving decrypted models:", event.target.error);
+        reject(event.target.error);
+      };
+    });
+  };
+      
+  async function verifySignedHash(originalHash, signedHash) {
     try {
-      // Convert the signed hash from base64
-      const signatureBytes = new Uint8Array(atob(signedHash).split('').map(c => c.charCodeAt(0)));
-
-      // Convert the original hash from hex to ArrayBuffer
-      const messageBytes = new Uint8Array(originalHash.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-
-      return await window.crypto.subtle.verify(
-        {
-          name: 'RSASSA-PKCS1-v1_5',
+      const response = await fetch(verificationURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        publicKey,
-        signatureBytes,
-        messageBytes
-      );
-    } catch (error){
-      console.error("Error verifying hash:", error);
+        body: JSON.stringify({
+          combinedHash: originalHash,
+          digitalSignature: signedHash,
+          livenessStatus: true, // or false, depending on your logic
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.status === 200) {
+        console.log('Model verified and authenticated:', data.message);
+        return true;
+      } else if (response.status === 400) {
+        console.error('Combined hash and digital signature are required:', data.message);
+      } else if (response.status === 401) {
+        console.error('Invalid digital signature. Verification failed:', data.message);
+      } else if (response.status === 500) {
+        console.error('Error verifying model:', data.message);
+      } else {
+        console.error('Unexpected response:', data.message);
+      }
+  
+      return false;
+    } catch (error) {
+      console.error('Error verifying hash:', error);
       return false;
     }
   }
@@ -567,48 +710,78 @@ function arrayBufferToHex(buffer) {
   };
 
   // Functions to handle downloading of encrypted and decrypted models
- 
+
+  const initializeModels = async () => {
+    const storedModels = await getDecryptedModels();
+    const storedSignedHash = await fetchSignedHash();
+    if (storedModels&&storedSignedHash) {
+      console.log("Using cached models from indexedDB");
+      setDecryptedModels(storedModels);
+      setSignedHash(storedSignedHash);
+      return 1;
+    } else {
+      console.log("Models not found in indexedDB, fetching...");
+      return 0;
+     // Fetch and decrypt logic
+    }
+  };
+
+  
+  useEffect(() => {
+     // Tracks if `initializeModels` has been run
+  
+    const init = async () => {
+      if (!hasInitialized.current) {
+        hasInitialized.current = true; // Set to true to prevent re-execution
+        modelStatus.current = await initializeModels();
+         // Wait for initializeModels to complete
+         if(modelStatus.current===0){
+          
+          setForceUpdate((prev) => !prev);
+        }
+        return;
+      }
+      
+        if (modelStatus.current === 1&&!isVerified) {
+          verifyModels();
+          
+        } else if (modelStatus.current === 0) {
+          
+          console.log(keyGenerated);
+          // Models need fetching or decryption
+          if (!keyGenerated) {
+            generateKeyPair();
+          } else if (keyGenerated && !modelsLoaded) {
+            loadModel();
+          } else if (modelsLoaded && !isDecrypted) {
+            decryptModels();
+          } else if (isDecrypted&&!isVerified) {
+            verifyModels();
+          }
+        }
+  
+        if (isVerified) {
+          props.setDecryptedModels(decryptedModels);
+          props.setModelReady(true);
+          if (props.reVerify) {
+            props.setReVerify(false);
+          }
+        }
+      
+    };
+  
+    init(); // Call the async initializer function
+  }, [
+    keyGenerated,
+    forceUpdate,
+    modelsLoaded,
+    isDecrypted,
+    isVerified,
+    props.reVerify,
+    decryptedModels,
     
-
-
-
-  // Component for displaying a loading spinner during asynchronous operations
-  const LoadingSpinner = () => (
-    <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-      />
-    </svg>
-  );
-
-  // Main component rendering the application UI
-  useEffect(
-                ()=>{
-                
-                props.setKeyGenerated(keyGenerated) ;
-                props.setIsLoaded(modelsLoaded);
-                props.setIsDecrypted(isDecrypted);
-                
-                console.log(keyGenerated,modelsLoaded,isDecrypted,decryptedModels,props.reVerify);
-                if(!keyGenerated){
-                generateKeyPair();}
-                if(keyGenerated&&!modelsLoaded){loadModel(); }
-                if(props.reVerify){setIsVerified(false);
-
-                }
-                if(modelsLoaded&&!isDecrypted){decryptModels()};
-                if(isDecrypted&&!isVerified){
-                  verifyModels();
-                }
-                if(isDecrypted&&isVerified){(
-                  props.setDecryptedModels(decryptedModels));
-                  if (props.reVerify) {
-                    props.setReVerify(false); // Assuming setReVerify is passed as a prop
-                }
-                }},[keyGenerated, modelsLoaded, isDecrypted,isVerified,props.reVerify]);
+  ]);
+  
 }
 
 export default ModelService;
