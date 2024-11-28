@@ -19,7 +19,6 @@ const AadhaarAuthenticationPage = (props) => {
     console.log("OTP submitted:", otp);
     props.onNext();
   };
-
   return (
     <div className="authentication-container">
       {step === 1 ? (
