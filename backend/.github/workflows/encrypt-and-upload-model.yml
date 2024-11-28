@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - "s3-uploads/**"            # Trigger on changes in the 's3-uploads' directory
-      - "model_versions.json"  # Trigger on changes in the version file
+      - "model_versions.json"      # Trigger on changes in the version file
 
 jobs:
   upload_model:
@@ -44,18 +44,27 @@ jobs:
           echo "changed_models=$CHANGED_MODELS" >> $GITHUB_ENV
 
       - name: Upload private key to S3 (from s3-uploads folder)
+        continue-on-error: true  # Prevent workflow failure if key upload fails
         run: |
-          PRIVATE_KEY_PATH="s3-uploads/private_key.pem"  # Path of your private key in the s3-uploads folder
+          PRIVATE_KEY_PATH="s3-uploads/private_key.pem"
           S3_BUCKET="${{ secrets.S3_BUCKET_NAME }}"
           KMS_KEY_ID="${{ secrets.KMS_KEY_ID }}"
           
-          # Upload private key to S3 with encryption
-          echo "Uploading private key to S3..."
-          aws s3 cp "$PRIVATE_KEY_PATH" "s3://$S3_BUCKET/keys/private_key.pem" --sse aws:kms --sse-kms-key-id "$KMS_KEY_ID"
-
-          # After successful upload, delete the private key from the repository
-          echo "Deleting private key from the repository after uploading to S3..."
-          rm "$PRIVATE_KEY_PATH"
+          if [ -f "$PRIVATE_KEY_PATH" ]; then
+            echo "Found private key at $PRIVATE_KEY_PATH"
+            # Upload private key to S3 with encryption
+            echo "Uploading private key to S3..."
+            if aws s3 cp "$PRIVATE_KEY_PATH" "s3://$S3_BUCKET/keys/private_key.pem" --sse aws:kms --sse-kms-key-id "$KMS_KEY_ID"; then
+              echo "Successfully uploaded private key to S3"
+              # After successful upload, delete the private key from the repository
+              echo "Deleting private key from the repository after uploading to S3..."
+              rm "$PRIVATE_KEY_PATH"
+            else
+              echo "Failed to upload private key to S3"
+            fi
+          else
+            echo "Private key not found at $PRIVATE_KEY_PATH - Skipping upload"
+          fi
 
       - name: Upload updated models
         if: env.changed_models != ''
@@ -71,22 +80,26 @@ jobs:
               continue
             fi
 
-            CURRENT_VERSION=$(jq -r --arg model "$MODEL" '.[$model]' <<< "$CURRENT_VERSIONS")
             MODEL_PATH="s3-uploads/$MODEL"
+            CURRENT_VERSION=$(jq -r --arg model "$MODEL" '.[$model]' <<< "$CURRENT_VERSIONS")
             S3_FILE="s3://$S3_BUCKET/${MODEL}-${CURRENT_VERSION}"
 
-            echo "Uploading $MODEL (version $CURRENT_VERSION) to $S3_FILE"
+            if [ -f "$MODEL_PATH" ]; then
+              echo "Uploading $MODEL (version $CURRENT_VERSION) to $S3_FILE"
 
-            # Upload to S3 with SSE-KMS
-            aws s3 cp "$MODEL_PATH" "$S3_FILE" --sse aws:kms --sse-kms-key-id "$KMS_KEY_ID"
-            
-            # Check if upload was successful, then delete the file from the repo
-            if [ $? -eq 0 ]; then
-              echo "Model uploaded successfully, deleting $MODEL from the repository."
-              rm "$MODEL_PATH"
+              # Upload to S3 with SSE-KMS
+              aws s3 cp "$MODEL_PATH" "$S3_FILE" --sse aws:kms --sse-kms-key-id "$KMS_KEY_ID"
+              
+              # Check if upload was successful, then delete the file from the repo
+              if [ $? -eq 0 ]; then
+                echo "Model uploaded successfully, deleting $MODEL from the repository."
+                rm "$MODEL_PATH"
+              else
+                echo "Model upload failed for $MODEL."
+                exit 1
+              fi
             else
-              echo "Model upload failed for $MODEL."
-              exit 1
+              echo "Model file $MODEL_PATH not found. Skipping upload."
             fi
           done
 
