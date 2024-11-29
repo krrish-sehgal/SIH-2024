@@ -14,7 +14,7 @@
     display: none;
   }
   .path {
-    stroke: #66cdaa;
+    stroke: #4D869C;
     stroke-linecap: round;
     animation: dash 1.5s ease-in-out infinite;
   }
@@ -43,6 +43,6 @@
 .loading-text {
     margin-top: 10px;
     font-size: 20px;
-    color: #66cdaa;
+    color: #4D869C;
     text-align: center;
   }

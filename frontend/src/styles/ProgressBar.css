@@ -1,52 +1,65 @@
-
-  
-
-
 .progress-bar {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    margin-bottom: 0;
-    margin-top: 5vh;
-    margin-left: 20vh;
-  margin-right:20vh;
-  }
-  
-  .step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  
-  .circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    color: white;
-    margin-bottom: 8px;
-  }
-  
-  .pending {
-    background-color: #ccc;
-  }
-  
-  .completed {
-    background-color: #28a745;
-  }
-  
-  .active {
-    background-color: #ffc107;
-  }
-  
-  .step-title {
-    font-size: 12px;
-    max-width: 70px;
-    word-wrap: break-word;
-    align-items: center;
-  }
-  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 5vh 40vh;
+}
+
+.step-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.step-container:last-child {
+  flex: 0;
+}
+
+.line {
+  height: 2px;
+  flex: 1;
+  margin: 0 10px;
+  background-color: #CDE8E5;
+}
+
+.line.completed {
+  background-color: #4D869C;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.circle {
+  width: 10vh;
+  height: 10vh;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.pending {
+  background-color: #CDE8E5;
+}
+
+.completed {
+  background-color: #4D869C;
+}
+
+.active {
+  background-color: #7AB2B2;
+  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.3);
+}
+
+.step-title {
+  font-size: 12px;
+  max-width: 70px;
+  word-wrap: break-word;
+}

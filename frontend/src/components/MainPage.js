@@ -4,10 +4,12 @@ import FaceAuthenticationPage from "./FaceAuthenticationPage";
 import FaceAuthToo from "./FaceAuthToo";
 import ProgressBar from "./ProgressBar";
 import "../styles/MainPage.css"
+import Navbar from "./Navbar";
+import EndPage from "./EndPage";
 
 const MainPage = () => {
   const steps = ["Details", "Verification", "OTP", "Face Auth"];
-  const [currentStep, setCurrentStep] = useState(3);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const goToNextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -18,7 +20,7 @@ const MainPage = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
-        return <div>Welcome to the UIDAI Authentication Process!</div>;
+        return <EndPage/>;
       case 1:
         return <AadhaarAuthenticationPage onNext={goToNextStep} stepNum={1} />;
       case 2:
@@ -32,6 +34,7 @@ const MainPage = () => {
 
   return (
     <div className="main-container">
+      <Navbar  step={currentStep} totalSteps={4}/>
       <ProgressBar steps={steps} currentStep={currentStep} />
       <div className="step-content">{renderStepContent()}</div>
     </div>
