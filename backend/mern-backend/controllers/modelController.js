@@ -66,3 +66,13 @@ exports.getPublicVerificationKey = async (req, res, next) => {
 exports.authenticate = async (req, res, next) => {
   res.status(200).json({ message: "Model verified and Authenticated." }); 
 }
+
+exports.getModelVersions = async (req, res, next) => {
+  try {
+    const modelVersions = await fetchModelVersions();
+    res.status(200).json({ versions: modelVersions });
+  } catch (error) {
+    console.error("Error fetching model versions:", error);
+    res.status(500).json({ error: "Failed to fetch model versions." });
+  }
+};
