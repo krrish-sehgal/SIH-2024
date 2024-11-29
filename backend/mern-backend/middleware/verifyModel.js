@@ -4,13 +4,28 @@ const path = require('path');
 
 const verifyModel = async (req, res, next) => {
     try {
-        const { combinedHash, digitalSignature } = req.body; // Expect combinedHash and signature from the frontend
+        const { combinedHash, digitalSignature, versions } = req.body;
 
         // Validate inputs
-        if (!combinedHash || !digitalSignature) {
+        if (!combinedHash || !digitalSignature || !versions) {
             return res.status(400).json({ 
-                message: "Combined hash and digital signature are required." 
+                message: "Combined hash, digital signature, and versions are required." 
             });
+        }
+
+        // Verify versions
+        const versionsFilePath = path.join(__dirname, '../../model_versions.json');
+        const storedVersions = JSON.parse(await fs.readFile(versionsFilePath, 'utf8'));
+
+        // Check if all models have matching versions
+        for (const [model, version] of Object.entries(versions)) {
+            if (!storedVersions[model] || storedVersions[model] !== version) {
+                return res.status(400).json({
+                    message: `Invalid or mismatched version for model: ${model}`,
+                    expected: storedVersions[model],
+                    received: version
+                });
+            }
         }
 
         const publicKeyPath = path.join(__dirname, '../digital_signature_keys/public_key.pem');
