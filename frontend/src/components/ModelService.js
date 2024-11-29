@@ -25,7 +25,8 @@ const [forceUpdate, setForceUpdate] = useState(false);
   const hasInitialized = useRef(false);
   const encryptedModelsURL = process.env.REACT_APP_MODELSURL;
   const verificationURL=process.env.REACT_APP_VERIFICATIONURL;
-
+  const versionsURL=process.env.REACT_APP_VERSIONSURL;
+  const [versionsVerfied,setVersionsVerified]=useState(false);
   console.log(encryptedModelsURL);
   
 
@@ -90,37 +91,36 @@ const [forceUpdate, setForceUpdate] = useState(false);
       
     }
   };
-  const verifyModels =async () =>{
-    // Generate combined hash of all decrypted models
-    try{
- 
+
+const verifyModels = async () => {
+  try {
     const combinedHash = await generateCombinedHash(
       decryptedModels.map((model) => model.decryptedModel)
     );
-    console.log("combinedhash");
-    console.log(combinedHash);
-    
-    // Verify the combined signed hash
     
     if (await verifySignedHash(combinedHash, signedHash)) {
       console.log("All models verified successfully!");
       setIsVerified(true);
-      
-      
+      props.setIsVerified(true);
+      props.setIsVerifying(false); // Ensure loading is removed
+      props.setReVerify(false);
+      setIsVerified(false);
     } else {
-      modelStatus.current =0;
+      modelStatus.current = 0;
       console.log("Model verification failed, aborting decryption.");
-      if(modelsLoaded){setModelsLoaded(false);}
-      else(setForceUpdate((prev) => !prev));
-          
+      props.setIsVerifying(false); // Also remove loading on failure
+      props.setIsVerified(false);
+      props.setReVerify(false);
+      setModelsLoaded(false);
+    }
+  } catch(error) {
+    console.log("Error Verifying models:", error);
+    modelStatus.current = 0;
+    props.setIsVerifying(false); // Remove loading on error
+  }
+};
 
-    }}
-    catch(error){
-      console.log("Error Verifying models:", error);
-      modelStatus.current =0;
-    } 
 
-  };
   const generateAesKey = async (frontendPrivateKey, backendPublicKeyBase64) => {
     try {
       // Step 1: Convert the backend public key from base64 to a raw format
@@ -568,6 +568,12 @@ const fetchSignedHash = () => {
       
   async function verifySignedHash(originalHash, signedHash) {
     try {
+
+      const modelVersions = decryptedModels.reduce((acc, model) => {
+        acc[model.modelName] = model.version;
+        return acc;
+      }, {});
+  
       const response = await fetch(verificationURL, {
         method: 'POST',
         headers: {
@@ -576,9 +582,11 @@ const fetchSignedHash = () => {
         body: JSON.stringify({
           combinedHash: originalHash,
           digitalSignature: signedHash,
-          livenessStatus: true, // or false, depending on your logic
+          livenessStatus: true,
+          versions: modelVersions // Add model versions to request body
         }),
       });
+      
   
       const data = await response.json();
   
@@ -710,7 +718,7 @@ function arrayBufferToHex(buffer) {
   };
 
   // Functions to handle downloading of encrypted and decrypted models
-
+ 
   const initializeModels = async () => {
     const storedModels = await getDecryptedModels();
     const storedSignedHash = await fetchSignedHash();
@@ -725,7 +733,46 @@ function arrayBufferToHex(buffer) {
      // Fetch and decrypt logic
     }
   };
+  const verifyVersions = async () => {
+    try {
+      const response = await fetch(versionsURL, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const { versions: expectedVersions } = await response.json();
+      
+      // Check if all current model versions match expected versions
+      const versionsMatch = decryptedModels.every(model => 
+        expectedVersions[model.modelName] === model.version
+      );
+  
+      if (!versionsMatch) {
+        console.log("Model versions verification failed");
+        modelStatus.current = 0;
+        if(modelsLoaded) {
+          setModelsLoaded(false);
+        } else {
+          setForceUpdate((prev) => !prev);
+        }
+        return false;
+      }
+      
+      console.log("All model versions verified successfully!");
+      setVersionsVerified(true);
 
+    } catch (error) {
+      console.error("Error verifying versions:", error);
+      modelStatus.current = 0;
+
+    }
+  };
   
   useEffect(() => {
      // Tracks if `initializeModels` has been run
@@ -736,18 +783,17 @@ function arrayBufferToHex(buffer) {
         modelStatus.current = await initializeModels();
          // Wait for initializeModels to complete
          if(modelStatus.current===0){
-          
           setForceUpdate((prev) => !prev);
         }
         return;
       }
       
-        if (modelStatus.current === 1&&!isVerified) {
-          verifyModels();
-          
+        if (modelStatus.current === 1&&!versionsVerfied) {
+          verifyVersions();
+         
         } else if (modelStatus.current === 0) {
           
-          console.log(keyGenerated);
+          
           // Models need fetching or decryption
           if (!keyGenerated) {
             generateKeyPair();
@@ -755,18 +801,23 @@ function arrayBufferToHex(buffer) {
             loadModel();
           } else if (modelsLoaded && !isDecrypted) {
             decryptModels();
-          } else if (isDecrypted&&!isVerified) {
-            verifyModels();
-          }
+            return;
+          } 
         }
-  
-        if (isVerified) {
+        if (props.reVerify&&!isVerified) {
+          verifyModels();
+        }
+        else if (isDecrypted||versionsVerfied) {
           props.setDecryptedModels(decryptedModels);
           props.setModelReady(true);
-          if (props.reVerify) {
-            props.setReVerify(false);
-          }
         }
+        else if(isVerified){
+          props.setIsVerified(true);
+          props.setReVerify(false);
+          props.setIsVerifying(false);
+          setIsVerified(false);
+        }
+        
       
     };
   
@@ -779,7 +830,7 @@ function arrayBufferToHex(buffer) {
     isVerified,
     props.reVerify,
     decryptedModels,
-    
+    versionsVerfied
   ]);
   
 }

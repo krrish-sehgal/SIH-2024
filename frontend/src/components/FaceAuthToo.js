@@ -1,11 +1,11 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import "../styles/FaceAuthenticationPage.css";
 import ModelService from "./ModelService";
 import Loading from "./Loading";
 import FaceDetection from "./FaceDetection";
 
-const FaceAuthenticationPage = () => {
+const FaceAuthToo = (props) => {
   const webcamRef = useRef(null);
   const [showAuthentication, setShowAuthentication] = useState(false);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
@@ -15,6 +15,10 @@ const FaceAuthenticationPage = () => {
   const[decryptedModels,setDecryptedModels]=useState(null);
   const[cameraPermission,setCameraPermission]=useState(false);
   const[reVerify,setReVerify]=useState(false);
+  const[liveness,setLiveness]=useState(false);
+  const[detectionDone,setDetectionDone]=useState(false);
+  const[isVerified, setIsVerified] = useState(false);
+  const[isVerifying, setIsVerifying] = useState(false);
   const checkCameraPermission = async () => {
 
     try {
@@ -48,11 +52,27 @@ const FaceAuthenticationPage = () => {
     }
   };
 
+  // Move verify to useEffect and watch for both detectionDone and liveness
+  useEffect(() => {
+    if (detectionDone) {
+      setIsVerifying(true);
+      setReVerify(true);
+    }
+  }, [detectionDone]);
+
   return (
-    
     <div className="face-auth-page">
-      <ModelService setDecryptedModels={setDecryptedModels} reVerify={reVerify}  setReVerify={setReVerify} setModelReady={setModelReady} setKeyGenerated={setKeyGenerated} setIsLoaded={setIsLoaded}/>
-      {!showAuthentication ? ((
+      <ModelService 
+        setDecryptedModels={setDecryptedModels} 
+        reVerify={reVerify}  
+        setIsVerifying={setIsVerifying} 
+        setIsVerified={setIsVerified} 
+        setReVerify={setReVerify} 
+        setModelReady={setModelReady} 
+        setKeyGenerated={setKeyGenerated} 
+        setIsLoaded={setIsLoaded}
+      />
+      {!showAuthentication ? (
         <div className="guidelines-box">
           <h2>Face Authentication Guidelines</h2>
           <ul>
@@ -70,11 +90,26 @@ const FaceAuthenticationPage = () => {
           </label>
           <button onClick={handleProceed}>Proceed</button>
         </div>
-      )) :(!modelReady)?<Loading/>: (
-        <FaceDetection models={decryptedModels} setReVerify={setReVerify}/>
+      ) : !modelReady ? (
+        <Loading/>
+      ) : detectionDone ? (
+        isVerifying ? (
+          <Loading/>
+        ) : (
+          <div className="auth-result">
+            <h2>{isVerified ? "Authorization Successful" : "Authorization Failed"}</h2>
+            <p>{liveness ? "Live face detected" : "No live face detected"}</p>
+          </div>
+        )
+      ) : (
+        <FaceDetection 
+          models={decryptedModels} 
+          setDetectionDone={setDetectionDone} 
+          setLiveness={setLiveness}
+        />
       )}
     </div>
   );
 };
 
-export default FaceAuthenticationPage;
+export default FaceAuthToo;

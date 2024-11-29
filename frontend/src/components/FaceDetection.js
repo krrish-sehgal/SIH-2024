@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Webcam from "react-webcam";
 
-const FaceDetection = ({ models, setReVerify }) => {
+const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const [output, setOutput] = useState("Initializing...");
@@ -12,6 +12,13 @@ const FaceDetection = ({ models, setReVerify }) => {
   const processingInterval = 100; // Process every 100ms (10 fps)
   const frameRef = useRef(); // Store animation frame reference
   const outputRef = useRef("Initializing..."); // Use ref instead of state for output
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [cumulativeRealFaceTime, setCumulativeRealFaceTime] = useState(0);
+  const [verificationComplete, setVerificationComplete] = useState(false);
+  const [verified, setVerified] = useState(false);
+  const lastRealFaceTime = useRef(null);
+  const timerRef = useRef(null);
+  const lastFrameTime = useRef(null);  // Add this ref
 
   useEffect(() => {
     const loadModels = async () => {
@@ -32,6 +39,29 @@ const FaceDetection = ({ models, setReVerify }) => {
     };
     loadModels();
   }, [models]);
+
+  useEffect(() => {
+    if (yoloModel && antispoofModel && !verificationComplete) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            setLiveness(cumulativeRealFaceTime >= 10);
+            
+            setVerificationComplete(true);
+            
+            setDetectionDone(true);
+            clearInterval(timerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
+    }
+  }, [yoloModel, antispoofModel]);
 
   const preprocessImage = (imageData, targetWidth, targetHeight) => {
     const canvas = document.createElement('canvas');
@@ -98,6 +128,11 @@ const FaceDetection = ({ models, setReVerify }) => {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     try {
+      const currentTime = Date.now();
+      if (!lastFrameTime.current) {
+        lastFrameTime.current = currentTime;
+      }
+      
       // Run YOLO first
       const yoloFeeds = {
         images: new ort.Tensor(
@@ -155,15 +190,25 @@ const FaceDetection = ({ models, setReVerify }) => {
         const antispoofResults = await antispoofModel.run(antispoofFeeds);
         const probability = sigmoid(antispoofResults.output.data[0]);
 
-        // Update output only when value changes
         const newOutput = probability > 0.4 ? "Real face detected" : "Spoof detected";
+        
+        // Update cumulative real face time
+        if (newOutput === "Real face detected" && !verificationComplete) {
+          const timeIncrement = (currentTime - lastFrameTime.current) / 1000;
+          setCumulativeRealFaceTime((prev) => {
+            const newTime = Math.min(prev + timeIncrement, 10);
+           
+            return newTime;
+          });
+        }
+        lastFrameTime.current = currentTime;
+        
         if (outputRef.current !== newOutput) {
           outputRef.current = newOutput;
           setOutput(newOutput);
-          if (newOutput === "Spoof detected") {
-            
-          }
         }
+      } else {
+        lastFrameTime.current = currentTime;
       }
     } catch (error) {
       console.error("Error processing frame:", error);
@@ -182,11 +227,38 @@ const FaceDetection = ({ models, setReVerify }) => {
       }
     };
   }, [yoloModel, antispoofModel]);
-
+useEffect(() => {if(cumulativeRealFaceTime>=10){setVerificationComplete(true);
+  setLiveness(true);
+  setDetectionDone(true);}}, [cumulativeRealFaceTime]);
   return (
     <div className="auth-container">
       <div className="auth-column">
         <h2>Face Authentication</h2>
+        <div className="status-row">
+          <p>{output}</p>
+          {!verificationComplete && (
+            <div className="mini-timer">
+              <span>{timeLeft}s</span>
+              <div className="timer-bar" style={{ width: `${(timeLeft/30) * 100}%` }}></div>
+            </div>
+          )}
+          {!verificationComplete && (
+            <div className="real-face-timer">
+            {/* Progress Bar */}
+            <div className="real-bar-container">
+              <div
+                className="real-bar"
+                style={{
+                  width: `${(cumulativeRealFaceTime / 10) * 100}%`,
+                }}
+              ></div>
+            </div>
+            {/* Time Display */}
+            <span>{cumulativeRealFaceTime.toFixed(1)}s/10s</span>
+          </div>
+          )}
+        </div>
+        
         <div className="webcam-overlay">
           <Webcam
             audio={false}
@@ -215,7 +287,6 @@ const FaceDetection = ({ models, setReVerify }) => {
             alt="Overlay" 
           />
         </div>
-        <p>{output}</p>
       </div>
       <div className="example-column">
         <h2>Example</h2>
