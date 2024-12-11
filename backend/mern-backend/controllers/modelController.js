@@ -64,6 +64,7 @@ exports.getPublicVerificationKey = async (req, res, next) => {
 }
 
 exports.authenticate = async (req, res, next) => {
+  console.log("auth success");
   res.status(200).json({ message: "Model verified and Authenticated." }); 
 }
 
