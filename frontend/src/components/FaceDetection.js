@@ -16,6 +16,8 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
   const lastRealFaceTime = useRef(null);
   const timerRef = useRef(null);
   const lastFrameTime = useRef(null);  // Add this ref
+  const [isRetryMode, setIsRetryMode] = useState(false);
+  const [isTimerExpired, setIsTimerExpired] = useState(false);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -42,10 +44,8 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            setLiveness(isRealFace);
-            setVerificationComplete(true);
-            setDetectionDone(true);
             clearInterval(timerRef.current);
+            setIsTimerExpired(true);
             return 0;
           }
           return prev - 1;
@@ -56,7 +56,7 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
         if (timerRef.current) clearInterval(timerRef.current);
       };
     }
-  }, [yoloModel, antispoofModel]);
+  }, [yoloModel, antispoofModel, isRetryMode]);
 
   const preprocessImage = (imageData, targetWidth, targetHeight) => {
     const canvas = document.createElement('canvas');
@@ -172,7 +172,6 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
 
         const newOutput = probability > 0.75 ? "Real face detected" : "Spoof detected";
         setIsRealFace(probability > 0.75);
-        
         if (outputRef.current !== newOutput) {
           outputRef.current = newOutput;
           setOutput(newOutput);
@@ -204,13 +203,20 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
     setDetectionDone(true);
   };
 
+  const handleRetry = () => {
+    setIsTimerExpired(false);
+    setTimeLeft(30);
+    setIsRetryMode(true);
+    setOutput("Models loaded. Ready for face authentication.");
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-column">
         <h2>Face Authentication</h2>
         <div className="status-row">
-          <p>{output}</p>
-          {!verificationComplete && (
+          
+          {(timeLeft>=1) && (
             <div className="mini-timer">
               <span>{timeLeft}s</span>
               <div className="timer-bar" style={{ width: `${(timeLeft/30) * 100}%` }}></div>
@@ -229,6 +235,7 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
               height: 480,
               facingMode: "user",
             }}
+            style={{ display: isTimerExpired ? 'none' : 'block' }}
           />
           <canvas 
             ref={canvasRef} 
@@ -247,15 +254,26 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
             alt="Overlay" 
           />
         </div>
-        { !verificationComplete && (
-            <button 
-              className="capture-button disabled" 
-              onClick={handleCapture}
-              disabled={output !== "Real face detected"}
-            >
-              Capture Image
-            </button>
-          )}
+        {!verificationComplete && !isTimerExpired && (
+          <button 
+            className="capture-button disabled" 
+            onClick={handleCapture}
+            disabled={output !== "Real face detected"}
+          >
+            Capture Image
+          </button>
+        )}
+        {isTimerExpired && (
+          <>
+          <p>Check Your Lighting , Ensure that you face isnt covered and is centered properly.</p>
+          <button 
+            className="retry-button" 
+            onClick={handleRetry}
+          >
+            Try Again
+          </button>
+          </>
+        )}
       </div>
       <div className="example-column">
         <h2>Example</h2>
