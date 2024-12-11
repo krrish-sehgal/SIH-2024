@@ -19,37 +19,37 @@ const FaceAuthToo = (props) => {
   const[detectionDone,setDetectionDone]=useState(false);
   const[isVerified, setIsVerified] = useState(false);
   const[isVerifying, setIsVerifying] = useState(false);
+
+  // Add this useEffect at the top level of the component
+  useEffect(() => {
+    checkCameraPermission();
+  }, []); // Run once on mount
+
+  // Update the checkCameraPermission function
   const checkCameraPermission = async () => {
-
     try {
-      // Requesting camera access
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      
-      // If camera is accessible, stop the stream to release the resources
       stream.getTracks().forEach(track => track.stop());
-
       setCameraPermission(true);
-     
     } catch (error) {
       console.log(error);
-    
+      setCameraPermission(false);
     }
   };
 
-
+  // Replace the existing handleProceed with this simplified version
   const handleProceed = () => {
-    if (guidelinesAccepted&&cameraPermission) {
-      setShowAuthentication(true);
-
-    }
-    else if(guidelinesAccepted&&!cameraPermission){
-      checkCameraPermission();
-        // Function to check and request camera permission
-      alert("Please give camera access for face authentication before proceeding.");
-    } 
-    else {
+    if (!guidelinesAccepted) {
       alert("Please accept the guidelines before proceeding.");
+      return;
     }
+    
+    if (!cameraPermission) {
+      alert("Please enable camera access in your browser settings and refresh the page.");
+      return;
+    }
+    
+    setShowAuthentication(true);
   };
 
   // Move verify to useEffect and watch for both detectionDone and liveness

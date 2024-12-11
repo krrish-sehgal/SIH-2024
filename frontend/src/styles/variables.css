@@ -1,0 +1,14 @@
+/* styles/variables.css */
+:root {
+    --primary-color: #00467F;    /* UIDAI Blue */
+    --secondary-color: #1A75BB;  /* Lighter Blue */
+    --accent-color: #FF9933;     /* Indian Flag Orange */
+    --success-color: #28a745;    /* Success Green */
+    --error-color: #dc3545;      /* Error Red */
+    --text-dark: #333333;
+    --text-light: #666666;
+    --background-light: #E8F4FB;
+    --white: #FFFFFF;
+    --border-radius: 8px;
+    --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }

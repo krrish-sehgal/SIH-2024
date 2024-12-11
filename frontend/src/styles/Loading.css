@@ -1,3 +1,5 @@
+
+
 .loading-spinner {
     display: flex;
     justify-content: center;
@@ -46,3 +48,14 @@
     color: #4D869C;
     text-align: center;
   }
+
+@media screen and (max-width: 480px) {
+  .spinner {
+    width: 40px;
+    height: 40px;
+  }
+
+  .loading-text {
+    font-size: 16px;
+  }
+}

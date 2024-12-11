@@ -1,0 +1,6 @@
+/* Add to App.css */
+@media screen and (max-width: 768px) {
+  .main-container {
+    padding: 10px;
+  }
+}
