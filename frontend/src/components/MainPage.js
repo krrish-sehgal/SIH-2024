@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import AadhaarAuthenticationPage from "./AadhaarAuthenticationPage";
-import FaceAuthenticationPage from "./FaceAuthenticationPage";
+
 import FaceAuthToo from "./FaceAuthToo";
 import ProgressBar from "./ProgressBar";
 import "../styles/MainPage.css"
