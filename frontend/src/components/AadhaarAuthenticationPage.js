@@ -111,20 +111,24 @@ const AadhaarAuthenticationPage = (props) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          aadhaarNumber: aadhaar, 
-          otp 
+          aadhaarNumber: parseInt(aadhaar), 
+          otp: parseInt(otp)
         })
       });
       
       const data = await response.json();
-      
+      console.log("API Response:", data); // Debug log
+
       if (response.ok && data.message === "Login successful") {
+        console.log("User data:", data.user); // Debug log
         sessionStorage.setItem('user', JSON.stringify(data.user));
+        console.log("Session storage set"); // Debug log
         props.onNext();
       } else {
         setError(data.message || "Authentication failed");
       }
     } catch (err) {
+      console.error("Network error:", err); // Debug log
       setError("Network error. Please try again.");
     }
     setIsLoading(false);

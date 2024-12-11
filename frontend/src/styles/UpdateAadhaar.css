@@ -1,0 +1,60 @@
+.update-form-container {
+  max-width: 550px;  /* Increased from 500px */
+  margin: 20px auto;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;  /* Add this to include padding in width calculation */
+}
+
+.form-group {
+  margin-bottom: 6px;  /* Reduced from 8px */
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 15px;  /* Increased from 14px */
+  box-sizing: border-box;  /* Add this to include padding in width calculation */
+  height: 42px;  /* Increased from 36px */
+}
+
+.form-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;  /* Reduced from 8px */
+  width: 100%;  /* Add this to ensure row doesn't overflow */
+}
+
+.form-row input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 15px;  /* Increased from 14px */
+  box-sizing: border-box;  /* Add this to include padding in width calculation */
+  min-width: 0;  /* Add this to allow flex items to shrink below content size */
+  height: 42px;  /* Increased from 36px */
+}
+
+.submit-button {
+  width: 100%;
+  padding: 8px;
+  background-color: #000080;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+  font-size: 15px;  /* Increased from 14px */
+  height: 42px;  /* Increased from 36px */
+}
+
+label {
+  font-size: 14px;
+  display: block;
+  margin-bottom: 2px;  /* Reduced from 3px */
+}

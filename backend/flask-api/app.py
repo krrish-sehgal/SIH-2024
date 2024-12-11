@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from deepface import DeepFace
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -10,6 +11,7 @@ import json
 import datetime
 # Initialize Flask app
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # MongoDB connection setup
 client = pymongo.MongoClient("mongodb://Krrish:krrish123@ac-7gvopvc-shard-00-00.1nxbntm.mongodb.net:27017,ac-7gvopvc-shard-00-01.1nxbntm.mongodb.net:27017,ac-7gvopvc-shard-00-02.1nxbntm.mongodb.net:27017/sih?replicaSet=atlas-11fue8-shard-0&ssl=true&authSource=admin&w=majority&appName=Cluster1")
@@ -18,6 +20,10 @@ collection = db.users  # Replace with your collection name
 
 # Utility function to decode base64 image to PIL image
 def decode_base64_to_image(base64_str):
+    # Remove data URI prefix if present
+    if ';base64,' in base64_str:
+        base64_str = base64_str.split(';base64,')[1]
+    
     # Decode the image
     img_data = base64.b64decode(base64_str)
     img = Image.open(BytesIO(img_data))
@@ -70,14 +76,15 @@ def verify_face():
         db_embedding = get_embedding_by_aadhar(adhar_number)
         db_timestamp = get_embedding(adhar_number)
         db_embedding=db_embedding.reshape(1,128)
+        
         # Step 2: Decode the base64 image and generate embedding for the uploaded image
         uploaded_image = decode_base64_to_image(image_base64)
-
+        print("hello0")
         # Convert the PIL image to NumPy array (required by DeepFace)
         uploaded_image_array = np.array(uploaded_image)
         # Step 3: Generate the embedding for the uploaded image
         uploaded_embedding = DeepFace.represent(img_path=uploaded_image_array, model_name="Facenet")
-
+        print("hello1")
         # Modified timestamp handling
         if isinstance(db_timestamp, str):
             db_timestamp = datetime.datetime.strptime(db_timestamp, "%Y-%m-%dT%H:%M:%S.%f+00:00")

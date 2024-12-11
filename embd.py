@@ -3,8 +3,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 # Paths to the two images
-image_path_1 = "/Users/KRRISH/Downloads/img1.jpeg"
-image_path_2 = "/Users/KRRISH/Downloads/img2.jpeg"
+image_path_1 = "/Users/ANJANEYA/Downloads/img1.jpeg"
+image_path_2 = "/Users/ANJANEYAp/Downloads/img2.jpeg"
 
 # Step 1: Generate face embeddings for each image
 try:

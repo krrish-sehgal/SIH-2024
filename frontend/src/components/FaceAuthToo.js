@@ -22,14 +22,47 @@ const FaceAuthToo = (props) => {
   const[detectionDone,setDetectionDone]=useState(false);
   const[isVerified, setIsVerified] = useState(false);
   const[isVerifying, setIsVerifying] = useState(false);
+  const[faceVerified, setFaceVerified] = useState(false);
+  const[verificationComplete, setVerificationComplete] = useState(false);
 
   // Add this useEffect at the top level of the component
   useEffect(() => {
     checkCameraPermission();
   }, []); // Run once on mount
-  const verifyUserImage = (imageData) => {
-    return true;
+
+  const verifyUserImage = async (imageData) => {
+    try {
+      const userData = JSON.parse(sessionStorage.getItem('user'));
+      if (!userData || !userData.aadhaarNumber) {
+        console.error('No aadhaar number found in session');
+        return false;
+      }
+
+      // Remove the data URI prefix if present
+      const cleanImageData = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
+
+      const response = await fetch(process.env.REACT_APP_FACE_VERIFY_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          aadhaarNumber: userData.aadhaarNumber,
+          image: cleanImageData,
+          timestamp: new Date().toISOString()
+        })
+      });
+      console.log(imageData);
+  
+      const data = await response.json();
+      return data.is_authorized;
+      console.log("Data returned");
+    } catch (error) {
+      console.error( error);
+      return false;
+    }
   };
+
   // Update the checkCameraPermission function
   const checkCameraPermission = async () => {
     try {
@@ -59,11 +92,18 @@ const FaceAuthToo = (props) => {
 
   // Move verify to useEffect and watch for both detectionDone and liveness
   useEffect(() => {
-    if (detectionDone) {
-      setIsVerifying(true);
-      setReVerify(true);
-    }
-  }, [detectionDone]);
+    const verifyFace = async () => {
+      if (detectionDone && liveness && imageData && !verificationComplete) {
+        setIsVerifying(true);
+        const result = await verifyUserImage(imageData);
+        setFaceVerified(result);
+        setVerificationComplete(true);
+        setIsVerifying(false);
+      }
+    };
+
+    verifyFace();
+  }, [detectionDone, liveness, imageData]);
 
   return (
     <div className="face-auth-page">
@@ -102,8 +142,12 @@ const FaceAuthToo = (props) => {
           <Loading/>
         ) : (
           <div className="auth-result">
-            <h2>{isVerified&&liveness&&verifyUserImage(imageData) ? "Authorization Successful" : "Authorization Failed"}</h2>
-            <p>{liveness ? "Live face detected" : <NoFaceDetected setDetectionDone={setDetectionDone}/>}</p>
+            <h2>
+              {!liveness ? "Liveness Check Failed" :
+               !verificationComplete ? "Verifying..." :
+               faceVerified ? "Authorization Successful" : "Authorization Failed"}
+            </h2>
+            <p>{liveness &&faceVerified? "Live face detected" : <NoFaceDetected setDetectionDone={setDetectionDone}/>}</p>
           </div>
         )
         
