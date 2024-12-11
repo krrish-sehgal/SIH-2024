@@ -9,6 +9,7 @@
   max-width: 600px;
   margin: 0 auto;
   text-align: left;
+  background-color: white;
 }
 
 .guidelines-box h2 {
@@ -115,6 +116,35 @@ button:disabled {
 button:disabled:hover {
   background-color: #d3d3d3; /* Ensure hover state is also disabled */
 }
+
+.verification-form {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.verification-form input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.error-message {
+  color: #ff0000;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.success-message {
+  color: #008000;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .authentication-container,
   .face-auth-container {

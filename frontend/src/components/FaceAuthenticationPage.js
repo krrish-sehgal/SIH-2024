@@ -13,6 +13,12 @@ const FaceAuthenticationPage = () => {
   const[isDecrypted,setIsDecrypted]=useState(false);
   const[decryptedModels,setDecryptedModels]=useState(null);
   const[cameraPermission,setCameraPermission]=useState(false);
+  const [aadhaar, setAadhaar] = useState("");
+  const [otp, setOtp] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
+
   const checkCameraPermission = async () => {
     try {
       // Requesting camera access
@@ -41,7 +47,41 @@ const FaceAuthenticationPage = () => {
     );
   };
 
+  const handleVerification = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          aadhaarNumber: aadhaar,
+          otp: otp
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.message === "Login successful") {
+        setSuccessMessage(`Welcome, ${data.user.name}`);
+        setErrorMessage("");
+        setIsVerified(true);
+      } else {
+        setErrorMessage(data.message);
+        setSuccessMessage("");
+      }
+    } catch (error) {
+      setErrorMessage("An error occurred during verification");
+      console.error(error);
+    }
+  };
+
   const handleProceed = () => {
+    if (!isVerified) {
+      setErrorMessage("Please complete verification first");
+      return;
+    }
     if (guidelinesAccepted&&cameraPermission) {
       setShowAuthentication(true);
 
@@ -60,7 +100,34 @@ const FaceAuthenticationPage = () => {
     
     <div className="face-auth-page">
       <ModelService setDecryptedModels={setDecryptedModels} setIsDecrypted={setIsDecrypted} setKeyGenerated={setKeyGenerated} setIsLoaded={setIsLoaded}/>
-      {!showAuthentication ? ((
+      {!isVerified ? (
+        <div className="verification-form">
+          <h2>Aadhaar Verification</h2>
+          <form onSubmit={handleVerification}>
+            <input
+              type="text"
+              value={aadhaar}
+              onChange={(e) => setAadhaar(e.target.value)}
+              placeholder="Enter Aadhaar Number"
+              pattern="\d{12}"
+              maxLength="12"
+              required
+            />
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Enter OTP"
+              pattern="\d{6,7}"
+              maxLength="7"
+              required
+            />
+            {errorMessage && <div className="error-message">{errorMessage}</div>}
+            {successMessage && <div className="success-message">{successMessage}</div>}
+            <button type="submit">Verify</button>
+          </form>
+        </div>
+      ) : !showAuthentication ? ((
         <div className="guidelines-box">
           <h2>Face Authentication Guidelines</h2>
           <ul>
