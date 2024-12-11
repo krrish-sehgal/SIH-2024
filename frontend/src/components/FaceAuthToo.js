@@ -5,7 +5,6 @@ import "../styles/FaceAuthenticationPage.css";
 import ModelService from "./ModelService";
 import Loading from "./Loading";
 import FaceDetection from "./FaceDetection";
-import FaceaAuthImage from "./faceAuthGuidelines.jpeg";
 
 const FaceAuthToo = (props) => {
   const { t } = useTranslation();
@@ -79,7 +78,7 @@ const FaceAuthToo = (props) => {
         <div className="guidelines-box">
           <h2>{t('faceAuth.guidelines.title')}</h2>
           <img
-            src={FaceaAuthImage}
+            src={t('faceAuth.guidelines.imagePath')}
             alt={t('faceAuth.guidelines.title')}
             className="guidelines-image"
           />
