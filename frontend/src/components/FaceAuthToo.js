@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import Webcam from "react-webcam";
 import "../styles/FaceAuthenticationPage.css";
 import ModelService from "./ModelService";
@@ -7,6 +8,7 @@ import FaceDetection from "./FaceDetection";
 import FaceaAuthImage from "./faceAuthGuidelines.jpeg";
 
 const FaceAuthToo = (props) => {
+  const { t } = useTranslation();
   const webcamRef = useRef(null);
   const [showAuthentication, setShowAuthentication] = useState(false);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
@@ -75,10 +77,10 @@ const FaceAuthToo = (props) => {
       />
       {!showAuthentication ? (
         <div className="guidelines-box">
-          <h2>Face Authentication Guidelines</h2>
+          <h2>{t('faceAuth.guidelines.title')}</h2>
           <img
             src={FaceaAuthImage}
-            alt="Face Authentication Guidelines"
+            alt={t('faceAuth.guidelines.title')}
             className="guidelines-image"
           />
           <label>
@@ -87,9 +89,9 @@ const FaceAuthToo = (props) => {
               checked={guidelinesAccepted} className="guidelinesCheck"
               onChange={() => setGuidelinesAccepted(!guidelinesAccepted)}
             />
-            I have read and understood the guidelines.
+            {t('faceAuth.guidelines.checkbox')}
           </label>
-          <button onClick={handleProceed}>Proceed</button>
+          <button onClick={handleProceed}>{t('faceAuth.guidelines.proceed')}</button>
         </div>
       ) : !modelReady ? (
         <Loading/>
@@ -98,8 +100,8 @@ const FaceAuthToo = (props) => {
           <Loading/>
         ) : (
           <div className="auth-result">
-            <h2>{isVerified&&liveness ? "Authorization Successful" : "Authorization Failed"}</h2>
-            <p>{liveness ? "Live face detected" : "No live face detected"}</p>
+            <h2>{isVerified&&liveness ? t('faceAuth.status.real') : t('faceAuth.status.spoof')}</h2>
+            <p>{liveness ? t('faceAuth.status.real') : t('faceAuth.status.spoof')}</p>
           </div>
         )
         

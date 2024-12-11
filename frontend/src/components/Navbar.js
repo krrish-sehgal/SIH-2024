@@ -1,48 +1,44 @@
 import React from "react";
+import { useTranslation } from 'react-i18next';
 import "../styles/Navbar.css";
+
 const Navbar = ({ step, totalSteps }) => {
-  // Calculate the width percentage of the progress bar
+  const { t } = useTranslation();
   const progressPercentage = (step / totalSteps) * 100;
 
-  // Define gradient colors
-  const gradientStart = "#4D869C"; // Starting color of the progress bar
-  const gradientMiddle = "#7AB2B2"; // Color up to the current step
-  const gradientEnd = "#CDE8E5"; // Remaining part color
+  const gradientStart = "#4D869C";
+  const gradientMiddle = "#7AB2B2";
+  const gradientEnd = "#CDE8E5";
 
   return (
-    
     <div>
       <nav
         style={{
-          
           display: "flex",
-      
           alignItems: "center",
           justifyContent: "space-between",
-          backgroundColor: "#E8F4FB", // Light blue background
+          backgroundColor: "#E8F4FB",
           padding: "10px 20px",
-          position: "relative", // For the progress bar
-          borderBottom: "none", // No default border
+          position: "relative",
+          borderBottom: "none",
         }}
       >
-        {/* Left Logo and Text */}
         <div style={{ display: "flex", alignItems: "center" }}>
           <img
-            src="emblem.png" // Replace with your logo URL
+            src="emblem.png"
             alt="Government Emblem"
             style={{ height: "10vh", marginRight: "10px" }}
           />
           <div>
             <h1
               style={{
-              
                 margin: 0,
                 fontSize: "18px",
                 color: "#333",
                 fontWeight: "bold",
               }}
             >
-              Unique Identification Authority of India
+              {t('navbar.title')}
             </h1>
             <p
               style={{
@@ -51,28 +47,24 @@ const Navbar = ({ step, totalSteps }) => {
                 color: "#666",
               }}
             >
-              Government of India
+              {t('navbar.subtitle')}
             </p>
           </div>
         </div>
-
-        {/* Right Logo */}
         <img
-          src="aadhaar-logo.png" // Replace with your Aadhaar logo URL
+          src="aadhaar-logo.png"
           alt="Aadhaar Logo"
           style={{ height: "10vh" }}
         />
       </nav>
-      {/* Progress Bar */}
       <div
         style={{
           width: "100%",
-          height: "5px", // Height of the progress bar
-          
+          height: "5px",
           transition: "background 0.3s ease-in-out",
           background: `linear-gradient(to right, 
           #4D869C ${progressPercentage}%,  
-          #CDE8E5 )`, // Smooth transition for gradient changes
+          #CDE8E5 )`,
         }}
       ></div>
     </div>

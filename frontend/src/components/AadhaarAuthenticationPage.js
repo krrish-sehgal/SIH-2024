@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next"; // Add this import
 import "../styles/AadhaarAuthenticationPage.css";
 
 const AadhaarAuthenticationPage = (props) => {
+  const { t } = useTranslation(); // Add this hook
   const [aadhaar, setAadhaar] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState(props.stepNum);
@@ -65,11 +67,11 @@ const AadhaarAuthenticationPage = (props) => {
   const handleAadhaarSubmit = () => {
     setError("");
     if (!validateAadhaar(aadhaar)) {
-      setError("Please enter a valid 12-digit Aadhaar number");
+      setError(t("aadhaar.error.invalid"));
       return;
     }
     if (!isVerified) {
-      setError("Please complete the reCAPTCHA verification");
+      setError(t("aadhaar.error.captcha"));
       return;
     }
     setStep(2);
@@ -99,7 +101,7 @@ const AadhaarAuthenticationPage = (props) => {
 
   const handleOtpSubmit = async () => {
     if (otp.length !== 6) {
-      setError("Please enter a valid 6-digit OTP");
+      setError(t("aadhaar.error.otp"));
       return;
     }
 
@@ -133,10 +135,10 @@ const AadhaarAuthenticationPage = (props) => {
       
       {step === 1 ? (
         <div className="aadhaar-step">
-          <h2>Aadhaar Authentication</h2>
+          <h2>{t("aadhaar.title")}</h2>
           <input
             type="text"
-            placeholder="Enter Aadhaar Number"
+            placeholder={t("aadhaar.input")}
             value={aadhaar}
             onChange={(e) => setAadhaar(e.target.value)}
             maxLength={12}
@@ -151,12 +153,12 @@ const AadhaarAuthenticationPage = (props) => {
             onClick={handleAadhaarSubmit}
             disabled={isLoading || !isVerified}
           >
-            {isLoading ? "Verifying..." : "Submit Aadhaar"}
+            {isLoading ? t("aadhaar.verifying") : t("aadhaar.submit")}
           </button>
         </div>
       ) : (
         <div className="otp-step">
-          <h2>OTP Verification</h2>
+          <h2>{t("aadhaar.otpTitle")}</h2>
           <div className="otp-input-container">
             {otpValues.map((value, index) => (
               <input
@@ -178,7 +180,7 @@ const AadhaarAuthenticationPage = (props) => {
             onClick={handleOtpSubmit}
             disabled={isLoading}
           >
-            {isLoading ? "Verifying..." : "Verify OTP"}
+            {isLoading ? t("aadhaar.verifying") : t("aadhaar.verifyOtp")}
           </button>
         </div>
       )}

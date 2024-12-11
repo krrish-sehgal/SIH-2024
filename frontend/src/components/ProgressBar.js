@@ -1,10 +1,14 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import "../styles/ProgressBar.css";
 
 const ProgressBar = ({ steps, currentStep }) => {
+  const { t } = useTranslation();
+  
   if(currentStep === 0){
-    return null
+    return null;
   }
+  
   return (
     <div className="progress-bar">
       {steps.map((step, index) => {
@@ -15,14 +19,10 @@ const ProgressBar = ({ steps, currentStep }) => {
         return (
           <div key={index} className="step-container">
             <div className="step">
-              <div
-                className={`circle ${
-                  isActive ? "active" : isCompleted ? "completed" : "pending"
-                }`}
-              >
+              <div className={`circle ${isActive ? "active" : isCompleted ? "completed" : "pending"}`}>
                 {index + 1}
               </div>
-              <span className="step-title">{step}</span>
+              <span className="step-title">{t(`progressBar.steps.${step}`)}</span>
             </div>
             {!isLastStep && <div className={`line ${isCompleted ? 'completed' : 'pending'}`} />}
           </div>

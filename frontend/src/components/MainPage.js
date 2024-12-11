@@ -5,11 +5,12 @@ import FaceAuthToo from "./FaceAuthToo";
 import ProgressBar from "./ProgressBar";
 import "../styles/MainPage.css"
 import Navbar from "./Navbar";
-import EndPage from "./EndPage";
+
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const MainPage = () => {
-  const steps = ["Details", "Verification", "OTP", "Face Auth"];
-  const [currentStep, setCurrentStep] = useState(1);
+  const steps = ["Language", "Verification", "OTP", "Face Auth"];
+  const [currentStep, setCurrentStep] = useState(3);
 
   const goToNextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -20,7 +21,7 @@ const MainPage = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
-        return <EndPage/>;
+        return <LanguageSwitcher onNext={goToNextStep} />;
       case 1:
         return <AadhaarAuthenticationPage onNext={goToNextStep} stepNum={1} />;
       case 2:
@@ -34,8 +35,9 @@ const MainPage = () => {
 
   return (
     <div className="main-container">
+      
       <Navbar  step={currentStep} totalSteps={4}/>
-      <ProgressBar steps={steps} currentStep={currentStep} />
+      <ProgressBar steps={["aadhaar", "otp", "face", "complete"]} currentStep={currentStep} />
       <div className="step-content">{renderStepContent()}</div>
     </div>
   );

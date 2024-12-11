@@ -1,0 +1,48 @@
+{
+    "navbar": {
+      "title": "Unique Identification Authority of India",
+      "subtitle": "Government of India"
+    },
+    "aadhaar": {
+      "title": "Aadhaar Authentication",
+      "input": "Enter Aadhaar Number",
+      "submit": "Submit Aadhaar",
+      "verifying": "Verifying...",
+      "otpTitle": "OTP Verification",
+      "verifyOtp": "Verify OTP",
+      "error": {
+        "invalid": "Please enter a valid 12-digit Aadhaar number",
+        "captcha": "Please complete the reCAPTCHA verification",
+        "otp": "Please enter a valid 6-digit OTP"
+      }
+    },
+    "faceAuth": {
+      "title": "Face Authentication",
+      "guidelines": {
+        "title": "Face Authentication Guidelines",
+        "checkbox": "I have read and understood the guidelines.",
+        "proceed": "Proceed"
+      },
+      "capture": "Capture Image",
+      "retry": "Try Again",
+      "status": {
+        "initializing": "Initializing...",
+        "loading": "Loading models...",
+        "ready": "Ready for face authentication",
+        "real": "Real face detected",
+        "spoof": "Spoof detected"
+      },
+      "lightingPrompt": "Check Your Lighting, Ensure that your face isn't covered and is centered properly."
+    },
+    "endPage": {
+      "thankyou": "Thank you for using Face Authentication Service"
+    },
+    "progressBar": {
+      "steps": {
+        "aadhaar": "Aadhaar Verification",
+        "otp": "OTP Verification",
+        "face": "Face Authentication",
+        "complete": "Complete"
+      }
+    }
+  }
