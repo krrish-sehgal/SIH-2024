@@ -1,11 +1,10 @@
 .authentication-container {
-    width: 90%;
     max-width: 400px;
-    margin: 20px auto;
+    margin: 50px auto;
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    padding: 15px;
+    padding: 20px;
     text-align: center;
   }
   
@@ -32,7 +31,6 @@
     margin-top: 10px;
   }
 
-<<<<<<< Updated upstream
 .error-message {
   color: #ff0000;
   margin-bottom: 15px;
@@ -67,19 +65,3 @@ button:disabled {
   outline: none;
   box-shadow: 0 0 5px rgba(122, 178, 178, 0.3);
 }
-=======
-@media screen and (max-width: 480px) {
-  .authentication-container {
-    width: 95%;
-    padding: 10px;
-  }
-
-  input {
-    font-size: 14px;
-  }
-
-  button {
-    width: 100%;
-  }
-}
->>>>>>> Stashed changes

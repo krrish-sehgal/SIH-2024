@@ -225,42 +225,34 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
           
         </div>
         
-        <div className="webcam-wrapper">
-          <div className="webcam-overlay">
-            <Webcam
-              audio={false}
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              videoConstraints={{
-                width: { min: 360, ideal: 480 },
-                height: { min: 480, ideal: 640 },
-                facingMode: "user",
-                aspectRatio: 3/4
-              }}
-              style={{ 
-                display: isTimerExpired ? 'none' : 'block',
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
-            />
-            <canvas 
-              ref={canvasRef} 
-              style={{ 
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                display: 'none'
-              }} 
-            />
-            <img 
-              className="overlay-circle" 
-              src={`face-${(output==="Models loaded. Ready for face authentication."||output==="Loading models...")?"mid":(output==="Real face detected"?"accepted":"rejected")}.png`} 
-              alt="Overlay" 
-            />
-          </div>
+        <div className="webcam-overlay">
+          <Webcam
+            audio={false}
+            ref={webcamRef}
+            screenshotFormat="image/jpeg"
+            videoConstraints={{
+              width: 360,
+              height: 480,
+              facingMode: "user",
+            }}
+            style={{ display: isTimerExpired ? 'none' : 'block' }}
+          />
+          <canvas 
+            ref={canvasRef} 
+            style={{ 
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'none'  // This removes the canvas from layout
+            }} 
+          />
+          <img 
+            className="overlay-circle" 
+            src={`face-${(output==="Models loaded. Ready for face authentication."||output==="Loading models...")?"mid":(output==="Real face detected"?"accepted":"rejected")}.png`} 
+            alt="Overlay" 
+          />
         </div>
         {!verificationComplete && !isTimerExpired && (
           <button 
