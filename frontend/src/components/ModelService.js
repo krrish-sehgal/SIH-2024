@@ -201,10 +201,11 @@ const verifyModels = async () => {
       // Step 2: Generate the AES key using the frontend private key and backend public key
       const aesKey = await generateAesKey(frontendPrivateKey, backendPublicKey);
   
-      // Array to store decrypted models
+      // Store encrypted data first
+      await storeEncryptedData(encryptedModels, aesKey, iv, signedHash);
+      
+      // Then decrypt for immediate use
       const decryptedModelsList = [];
-  
-      // Iterate through each encrypted model in the array
       for (const model of encryptedModels) {
         const { modelName, encryptedModel, version } = model;
   
@@ -218,11 +219,6 @@ const verifyModels = async () => {
           version,
         });
       }
-      storeDecryptedModels(decryptedModelsList)
-  .then(() => console.log("Models successfully stored in IndexedDB."))
-  .catch((err) => console.error("Error storing models:", err));
-
-      
       setDecryptedModels(decryptedModelsList);
       setIsDecrypted(true);
     } catch (error) {
@@ -251,14 +247,12 @@ const verifyModels = async () => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
       const data = await response.json();
       console.log("Received encrypted data lengths:", {
         models: data.encryptedModels?.length,
         keyLength: data.backendPublicKey?.length,
         ivLength: data.iv?.length
       });
-  
       if (data.encryptedModels && data.backendPublicKey && data.iv && data.signedCombinedHash) {
         // Store the backend's public key for later use in DHKE
         const backendPublicKeyBase64 = data.backendPublicKey; // Ensure the backend sends this public key
@@ -444,85 +438,157 @@ const verifyModels = async () => {
   }
 
   const storeSignedHash = async (signedHash) => {
-    const db = await initializeModelDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction("signedHash", "readwrite");
-      const store = transaction.objectStore("signedHash");
+    try {
+      const db = await initializeModelDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(["signedHash"], "readwrite");
+        const store = transaction.objectStore("signedHash");
+        
+        const request = store.put({ 
+          id: "currentHash", 
+          hash: signedHash 
+        });
   
-      store.put({ id: "signedHash", data: signedHash }); 
+        request.onsuccess = () => {
+          console.log("Signed Hash stored successfully");
+          resolve();
+        };
   
-      transaction.oncomplete = () => {
-        console.log("Signed Hash stored successfully.");
-        resolve();
-      };
+        request.onerror = () => {
+          console.error("Error storing signed hash:", request.error);
+          reject(request.error);
+        };
   
-      transaction.onerror = (event) => {
-        console.error("Error storing Signed Hash:", event.target.error);
-        reject(event.target.error);
-      };
-    });
+        transaction.oncomplete = () => {
+          db.close();
+        };
+      });
+    } catch (error) {
+      console.error("Error in storeSignedHash:", error);
+      throw error;
+    }
   };
-
-// Function to fetch signedCache from IndexedDB
-const fetchSignedHash = () => {
+  
+  const fetchSignedHash = async () => {
+    try {
+      const db = await initializeModelDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(["signedHash"], "readonly");
+        const store = transaction.objectStore("signedHash");
+        const request = store.get("currentHash");
+  
+        request.onsuccess = () => {
+          const result = request.result;
+          resolve(result ? result.hash : null);
+        };
+  
+        request.onerror = () => {
+          reject(request.error);
+        };
+  
+        transaction.oncomplete = () => {
+          db.close();
+        };
+      });
+    } catch (error) {
+      console.error("Error fetching signed hash:", error);
+      return null;
+    }
+  };
+  
+const initializeModelDB = () => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('DecryptedModelsDB', 2);
+    const request = indexedDB.open("EncryptedModelsDB", 1);
 
-    request.onsuccess = (event) => {
+    request.onupgradeneeded = (event) => {
       const db = event.target.result;
-      // Check if the object store exists
-      if (!db.objectStoreNames.contains('signedHash')) {
-        console.warn('signedHash object store does not exist.');
-        resolve(null);
-        return;
+      if (!db.objectStoreNames.contains("encryptedModels")) {
+        db.createObjectStore("encryptedModels", { keyPath: "id" });
       }
-
-      const transaction = db.transaction(['signedHash'], 'readonly');
-      const store = transaction.objectStore('signedHash');
-      const getRequest = store.get('signedHash');
-
-      getRequest.onsuccess = (event) => {
-        const result = event.target.result;
-        resolve(result ? result.data : null);
-      };
-
-      getRequest.onerror = (event) => {
-        reject('Error fetching signed hash:', event.target.error);
-      };
+      if (!db.objectStoreNames.contains("signedHash")) {
+        db.createObjectStore("signedHash", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("aesKey")) {
+        db.createObjectStore("aesKey", { keyPath: "id" });
+      }
     };
 
-    request.onerror = (event) => {
-      reject('Error opening IndexedDB:', event.target.error);
-    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
 };
-  
-  const initializeModelDB = () => {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open("DecryptedModelsDB", 2);
-  
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains("decryptedModels")) {
-          db.createObjectStore("decryptedModels", { keyPath: "id" });
-          
-        }
-        if (!db.objectStoreNames.contains("signedHash")) {
-          db.createObjectStore("signedHash", { keyPath: "id" });
-        }
-      };
-  
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
-  
-      request.onerror = (event) => {
-        console.error("Error initializing IndexedDB:", event.target.error);
-        reject(event.target.error);
-      };
+
+const storeEncryptedData = async (models, aesKey, ivValue, signedHash) => {
+  try {
+    const db = await initializeModelDB();
+    const transaction = db.transaction(["encryptedModels", "aesKey", "signedHash"], "readwrite");
+
+    // Store encrypted models with IV
+    transaction.objectStore("encryptedModels").put({
+      id: "currentModels",
+      models: models,
+      iv: ivValue
     });
-  };
-  const storeDecryptedModels = async (models) => {
+
+    // Store AES key directly
+    transaction.objectStore("aesKey").put({
+      id: "currentKey",
+      key: aesKey  // Store CryptoKey object directly
+    });
+
+    // Store signed hash
+    transaction.objectStore("signedHash").put({
+      id: "currentHash",
+      hash: signedHash
+    });
+
+    return new Promise((resolve, reject) => {
+      transaction.oncomplete = () => {
+        console.log("Stored all encrypted data successfully");
+        resolve();
+      };
+      transaction.onerror = () => reject(transaction.error);
+    });
+  } catch (error) {
+    console.error("Error storing encrypted data:", error);
+    throw error;
+  }
+};
+
+const getStoredData = async () => {
+  try {
+    const db = await initializeModelDB();
+    const [encryptedData, exportedKeyData, signedHashData] = await Promise.all([
+      new Promise((resolve, reject) => {
+        const request = db.transaction("encryptedModels").objectStore("encryptedModels").get("currentModels");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      }),
+      new Promise((resolve, reject) => {
+        const request = db.transaction("aesKey").objectStore("aesKey").get("currentKey");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      }),
+      new Promise((resolve, reject) => {
+        const request = db.transaction("signedHash").objectStore("signedHash").get("currentHash");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      })
+    ]);
+
+    if (!encryptedData || !exportedKeyData || !signedHashData) {
+      console.log("No stored data found");
+      return [null, null, null];
+    }
+
+    return [encryptedData, exportedKeyData.key, signedHashData.hash]; // Return key directly
+  } catch (error) {
+    console.error("Error retrieving stored data:", error);
+    return [null, null, null];
+  }
+};
+
+const storeDecryptedModels = async (models) => {
     const db = await initializeModelDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction("decryptedModels", "readwrite");
@@ -720,108 +786,92 @@ function arrayBufferToHex(buffer) {
   // Functions to handle downloading of encrypted and decrypted models
  
   const initializeModels = async () => {
-    const storedModels = await getDecryptedModels();
-    const storedSignedHash = await fetchSignedHash();
-    if (storedModels&&storedSignedHash) {
-      console.log("Using cached models from indexedDB");
-      setDecryptedModels(storedModels);
-      setSignedHash(storedSignedHash);
-      return 1;
-    } else {
-      console.log("Models not found in indexedDB, fetching...");
-      return 0;
-     // Fetch and decrypt logic
-    }
-  };
-  const verifyVersions = async () => {
     try {
-      const response = await fetch(versionsURL, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      const { versions: expectedVersions } = await response.json();
+      const [storedData, importedKey, storedHash] = await getStoredData();
       
-      // Check if all current model versions match expected versions
-      const versionsMatch = decryptedModels.every(model => 
-        expectedVersions[model.modelName] === model.version
-      );
-  
-      if (!versionsMatch) {
-        console.log("Model versions verification failed");
-        modelStatus.current = 0;
-        if(modelsLoaded) {
-          setModelsLoaded(false);
-        } else {
-          setForceUpdate((prev) => !prev);
+      if (storedData && importedKey && storedHash) {
+        console.log("Using cached encrypted models");
+        const decryptedList = [];
+        
+        for (const model of storedData.models) {
+          const decryptedBuffer = await decryptWithAes(
+            importedKey,
+            model.encryptedModel,
+            storedData.iv
+          );
+          decryptedList.push({
+            modelName: model.modelName,
+            decryptedModel: decryptedBuffer,
+            version: model.version
+          });
         }
-        return false;
+        
+        setDecryptedModels(decryptedList);
+        setSignedHash(storedHash);
+        return 1;
       }
       
-      console.log("All model versions verified successfully!");
-      setVersionsVerified(true);
-
+      if (!keyGenerated) {
+        return 0;
+      } else if (keyGenerated && !modelsLoaded) {
+        await loadModel();
+        return 0;
+      } else if (modelsLoaded && !isDecrypted) {
+        await decryptModels();
+        return 0;
+      }
+  
+      return 0;
     } catch (error) {
-      console.error("Error verifying versions:", error);
-      modelStatus.current = 0;
-
+      console.error("Error in initializeModels:", error);
+      return 0;
     }
   };
   
+  // Update useEffect to handle the initialization properly
   useEffect(() => {
-     // Tracks if `initializeModels` has been run
-  
     const init = async () => {
-      if (!hasInitialized.current) {
-        hasInitialized.current = true; // Set to true to prevent re-execution
-        modelStatus.current = await initializeModels();
-         // Wait for initializeModels to complete
-         if(modelStatus.current===0){
-          setForceUpdate((prev) => !prev);
+      try {
+        if (!hasInitialized.current) {
+          hasInitialized.current = true;
+          modelStatus.current = await initializeModels();
+          if (modelStatus.current === 0) {
+            setForceUpdate(prev => !prev);
+          }
+          return;
         }
-        return;
-      }
-      
-        if (modelStatus.current === 1&&!versionsVerfied) {
-          verifyVersions();
-         
+  
+        if (modelStatus.current === 1 && !versionsVerfied) {
+          await verifyVersions();
         } else if (modelStatus.current === 0) {
-          
-          
-          // Models need fetching or decryption
           if (!keyGenerated) {
-            generateKeyPair();
+            await generateKeyPair();
           } else if (keyGenerated && !modelsLoaded) {
-            loadModel();
+            await loadModel();
           } else if (modelsLoaded && !isDecrypted) {
-            decryptModels();
-            return;
-          } 
+            await decryptModels();
+          }
         }
-        if (props.reVerify&&!isVerified) {
-          verifyModels();
-        }
-        else if (isDecrypted||versionsVerfied) {
+  
+        if (props.reVerify && !isVerified) {
+          await verifyModels();
+        } else if (isDecrypted || versionsVerfied) {
           props.setDecryptedModels(decryptedModels);
           props.setModelReady(true);
-        }
-        else if(isVerified){
+        } else if (isVerified) {
           props.setIsVerified(true);
           props.setReVerify(false);
           props.setIsVerifying(false);
           setIsVerified(false);
         }
-        
-      
+      } catch (error) {
+        console.error("Error in initialization:", error);
+        modelStatus.current = 0;
+        setForceUpdate(prev => !prev);
+      }
     };
   
-    init(); // Call the async initializer function
+    init();
   }, [
     keyGenerated,
     forceUpdate,
@@ -833,6 +883,47 @@ function arrayBufferToHex(buffer) {
     versionsVerfied
   ]);
   
+const verifyVersions = async () => {
+  try {
+    const response = await fetch(versionsURL, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const { versions: expectedVersions } = await response.json();
+    
+    // Check if all current model versions match expected versions
+    const versionsMatch = decryptedModels.every(model => 
+      expectedVersions[model.modelName] === model.version
+    );
+
+    if (!versionsMatch) {
+      console.log("Model versions verification failed");
+      modelStatus.current = 0;
+      if(modelsLoaded) {
+        setModelsLoaded(false);
+      }
+      setForceUpdate(prev => !prev);
+      return false;
+    }
+    
+    console.log("All model versions verified successfully!");
+    setVersionsVerified(true);
+    return true;
+
+  } catch (error) {
+    console.error("Error verifying versions:", error);
+    modelStatus.current = 0;
+    throw error;
+  }
+};
+
 }
 
 export default ModelService;
