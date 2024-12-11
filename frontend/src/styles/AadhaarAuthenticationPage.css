@@ -65,3 +65,28 @@ button:disabled {
   outline: none;
   box-shadow: 0 0 5px rgba(122, 178, 178, 0.3);
 }
+
+.recaptcha-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 78px;
+  margin: 15px auto;
+  width: 100%;
+}
+
+.g-recaptcha > div {
+  margin: 0 auto;
+}
+
+.g-recaptcha {
+  transform: scale(0.9);
+  transform-origin: center;
+  display: inline-block;
+}
+
+@media (max-width: 320px) {
+  .g-recaptcha {
+    transform: scale(0.8);
+  }
+}

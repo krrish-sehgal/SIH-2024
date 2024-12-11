@@ -4,6 +4,7 @@ import "../styles/FaceAuthenticationPage.css";
 import ModelService from "./ModelService";
 import Loading from "./Loading";
 import FaceDetection from "./FaceDetection";
+import FaceaAuthImage from "./faceAuthGuidelines.jpeg";
 
 const FaceAuthToo = (props) => {
   const webcamRef = useRef(null);
@@ -75,11 +76,11 @@ const FaceAuthToo = (props) => {
       {!showAuthentication ? (
         <div className="guidelines-box">
           <h2>Face Authentication Guidelines</h2>
-          <ul>
-            <li>Ensure proper lighting on your face.</li>
-            <li>Face the camera directly with a neutral expression.</li>
-            <li>Avoid wearing hats or glasses that may obstruct your face.</li>
-          </ul>
+          <img
+            src={FaceaAuthImage}
+            alt="Face Authentication Guidelines"
+            className="guidelines-image"
+          />
           <label>
             <input
               type="checkbox"

@@ -215,14 +215,12 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
       <div className="auth-column">
         <h2>Face Authentication</h2>
         <div className="status-row">
-          
           {(timeLeft>=1) && (
             <div className="mini-timer">
               <span>{timeLeft}s</span>
               <div className="timer-bar" style={{ width: `${(timeLeft/30) * 100}%` }}></div>
             </div>
           )}
-          
         </div>
         
         <div className="webcam-overlay">
@@ -231,8 +229,8 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
             ref={webcamRef}
             screenshotFormat="image/jpeg"
             videoConstraints={{
-              width: 360,
-              height: 480,
+              width: 480,
+              height: 640,
               facingMode: "user",
             }}
             style={{ display: isTimerExpired ? 'none' : 'block' }}
@@ -245,7 +243,7 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
               left: 0,
               width: '100%',
               height: '100%',
-              display: 'none'  // This removes the canvas from layout
+              display: 'none'
             }} 
           />
           <img 
@@ -265,19 +263,15 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
         )}
         {isTimerExpired && (
           <>
-          <p>Check Your Lighting , Ensure that you face isnt covered and is centered properly.</p>
-          <button 
-            className="retry-button" 
-            onClick={handleRetry}
-          >
-            Try Again
-          </button>
+            <p>Check Your Lighting, Ensure that your face isn't covered and is centered properly.</p>
+            <button 
+              className="retry-button" 
+              onClick={handleRetry}
+            >
+              Try Again
+            </button>
           </>
         )}
-      </div>
-      <div className="example-column">
-        <h2>Example</h2>
-        <img src="guidelines.jpg" alt="Example of proper camera facing" />
       </div>
     </div>
   );

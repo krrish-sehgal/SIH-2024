@@ -1,6 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/AadhaarAuthenticationPage.css"
+import "../styles/AadhaarAuthenticationPage.css";
 
 const AadhaarAuthenticationPage = (props) => {
   const [aadhaar, setAadhaar] = useState("");
@@ -8,13 +8,59 @@ const AadhaarAuthenticationPage = (props) => {
   const [step, setStep] = useState(props.stepNum);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const navigate = useNavigate();
   const [otpValues, setOtpValues] = useState(new Array(6).fill(""));
   const otpRefs = useRef([...Array(6)].map(() => React.createRef()));
+  const recaptchaRef = useRef(null);
+  const [captchaReady, setCaptchaReady] = useState(false);
 
   const validateAadhaar = (aadhaar) => {
     return /^\d{12}$/.test(aadhaar);
   };
+
+  useEffect(() => {
+    // Validate site key immediately
+    const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
+    if (!siteKey) {
+      console.error('reCAPTCHA site key is missing');
+      return;
+    }
+
+    const initializeCaptcha = () => {
+      if (!window.grecaptcha) {
+        setTimeout(initializeCaptcha, 1000);
+        return;
+      }
+
+      try {
+        if (!document.getElementById('recaptcha-element')) {
+          console.error('reCAPTCHA element not found');
+          return;
+        }
+
+        window.grecaptcha.ready(() => {
+          window.grecaptcha.render('recaptcha-element', {
+            sitekey: siteKey,
+            callback: (response) => {
+              setIsVerified(true);
+              setError("");
+            }
+          });
+          setCaptchaReady(true);
+        });
+      } catch (error) {
+        console.error("reCAPTCHA initialization error:", error);
+      }
+    };
+
+    // Start initialization process
+    initializeCaptcha();
+
+    return () => {
+      // Cleanup if needed
+    };
+  }, []);
 
   const handleAadhaarSubmit = () => {
     setError("");
@@ -22,9 +68,12 @@ const AadhaarAuthenticationPage = (props) => {
       setError("Please enter a valid 12-digit Aadhaar number");
       return;
     }
+    if (!isVerified) {
+      setError("Please complete the reCAPTCHA verification");
+      return;
+    }
     setStep(2);
     props.onNext();
-    
   };
 
   const handleOtpChange = (index, value) => {
@@ -93,10 +142,14 @@ const AadhaarAuthenticationPage = (props) => {
             maxLength={12}
             required
           />
+          <div className="recaptcha-container">
+            {!captchaReady && <div>Loading reCAPTCHA...</div>}
+            <div id="recaptcha-element" ref={recaptchaRef}></div>
+          </div>
           {error && <div className="error-message">{error}</div>}
           <button 
             onClick={handleAadhaarSubmit}
-            disabled={isLoading}
+            disabled={isLoading || !isVerified}
           >
             {isLoading ? "Verifying..." : "Submit Aadhaar"}
           </button>
