@@ -1,92 +1,52 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    // Basic Info
-    aadhaarNumber: {
+    image_path: {
         type: String,
-        required: true,
-        unique: true,
-        length: 12
+        required: true
+    },
+    embedding: {
+        type: [Number],
+        required: true
     },
     name: {
         type: String,
         required: true
     },
-    dateOfBirth: {
+    aadhaarNumber: {
+        type: Number,
+        required: true,
+        unique: true
+    },
+    timestamp: {
         type: Date,
-        required: true
+        default: Date.now
     },
-    gender: {
+    otp: {
+        type: Number
+    },
+    dob: {
         type: String,
-        enum: ['Male', 'Female', 'Other'],
         required: true
     },
-
-    // Contact & Address
     address: {
         street: String,
         locality: String,
         district: String,
-        state: String,
-        pincode: {
-            type: String,
-            length: 6
-        }
+        state: String
     },
-    mobileNumber: {
-        type: String,
+    pincode: {
+        type: Number,
         required: true
     },
-    email: String,
-
-    // Verification Fields
-    otp: {
-        code: String,
-        expiresAt: Date
-    },
-    
-    // Face Recognition Data
-    faceData: {
-        faceEmbeddings: {
-            type: Buffer,  // Store binary data efficiently
-            required: true
-        },
-        embeddingFormat: {
-            type: String,
-            enum: ['float32', 'float64'],
-            default: 'float32'
-        },
-        dimensions: {
-            type: Number,  // Store the size of embedding vector
-            required: true
-        },
-        confidence: {
-            type: Number,
-            min: 0,
-            max: 1
-        },
-        lastUpdated: {
-            type: Date,
-            default: Date.now
-        }
-    },
-
-    // Additional Info
-    fatherName: String,
-    motherName: String,
-    isVerified: {
-        type: Boolean,
-        default: false
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
+    mobile: {
+        type: Number,
+        required: true
     }
 });
 
 // Index for faster queries
 userSchema.index({ aadhaarNumber: 1 });
-userSchema.index({ mobileNumber: 1 });
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

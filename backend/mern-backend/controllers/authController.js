@@ -3,15 +3,18 @@ const User = require('../Models/user');
 exports.verifyOTP = async (req, res) => {
     try {
         const { aadhaarNumber, otp } = req.body;
-
+        
         // Find user and verify OTP
-        const user = await User.findOne({ aadhaarNumber });
+        console.log("Looking for aadhaar:", aadhaarNumber);
+        console.log("With OTP:", otp);
+
+        const user = await User.findOne({ aadhaarNumber }); // No conversion needed
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Check if OTP exists and matches
-        if (!user.otp || !user.otp.code || user.otp.code !== otp) {
+        // Direct number comparison
+        if (!user.otp || user.otp !== otp) {
             return res.status(401).json({ message: "Invalid OTP" });
         }
 
@@ -28,5 +31,38 @@ exports.verifyOTP = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ message: "Error verifying OTP", error: error.message });
+    }
+};
+
+exports.fetchUserDetails = async (req, res) => {
+    try {
+        // Check if user is in session
+        if (!req.session.userId || !req.session.aadhaarNumber) {
+            return res.status(401).json({ message: "Please login first" });
+        }
+
+        // Find user by aadhaar number
+        const user = await User.findOne({ aadhaarNumber: req.session.aadhaarNumber });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Return user details
+        res.status(200).json({
+            name: user.name,
+            aadhaarNumber: user.aadhaarNumber,
+            timestamp: user.timestamp,
+            dob: user.dob,
+            address: {
+                street: user.address.street,
+                locality: user.address.locality,
+                district: user.address.district,
+                state: user.address.state
+            },
+            pincode: user.pincode,
+            mobile: user.mobile
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching user details", error: error.message });
     }
 };
