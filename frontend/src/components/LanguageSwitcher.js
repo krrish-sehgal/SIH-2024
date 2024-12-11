@@ -12,8 +12,8 @@ const LanguageSwitcher = ({ onNext }) => {
   return (
     <div className="language-page">
       <div className="language-content">
-        <h1>{t('Select Your Preferred Language')}</h1>
-        <p>{t('Please choose your preferred language to continue')}</p>
+        <h1>{t('languageSwitcher.title')}</h1>
+        <p>{t('languageSwitcher.description')}</p>
         
         <div className="language-switcher">
           <button 
@@ -31,10 +31,18 @@ const LanguageSwitcher = ({ onNext }) => {
             <span className="lang-label">Hindi</span>
             <span className="lang-native">हिंदी</span>
           </button>
+
+          <button 
+            className={`language-button ${i18n.language === 'kn' ? 'active' : ''}`}
+            onClick={() => changeLanguage('kn')}
+          >
+            <span className="lang-label">Kannada</span>
+            <span className="lang-native">ಕನ್ನಡ</span>
+          </button>
         </div>
 
         <button className="next-button" onClick={onNext}>
-          {t('Continue')} →
+          {t('languageSwitcher.continue')} →
         </button>
       </div>
     </div>

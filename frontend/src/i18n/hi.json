@@ -21,7 +21,8 @@
       "guidelines": {
         "title": "चेहरा प्रमाणीकरण दिशानिर्देश",
         "checkbox": "मैंने दिशानिर्देश पढ़ और समझ लिए हैं।",
-        "proceed": "आगे बढ़ें"
+        "proceed": "आगे बढ़ें",
+        "imagePath": "faceAuthGuidelines-hi.jpeg"
       },
       "capture": "तस्वीर लें",
       "retry": "पुनः प्रयास करें",
@@ -44,5 +45,10 @@
         "face": "चेहरा प्रमाणीकरण",
         "complete": "पूर्ण"
       }
+    },
+    "languageSwitcher": {
+        "title": "अपनी पसंदीदा भाषा चुनें",
+        "description": "जारी रखने के लिए कृपया अपनी पसंदीदा भाषा चुनें",
+        "continue": "जारी रखें"
     }
   }

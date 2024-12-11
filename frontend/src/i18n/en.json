@@ -21,7 +21,8 @@
       "guidelines": {
         "title": "Face Authentication Guidelines",
         "checkbox": "I have read and understood the guidelines.",
-        "proceed": "Proceed"
+        "proceed": "Proceed",
+        "imagePath": "faceAuthGuidelines-en.jpeg"
       },
       "capture": "Capture Image",
       "retry": "Try Again",
@@ -44,5 +45,10 @@
         "face": "Face Authentication",
         "complete": "Complete"
       }
+    },
+    "languageSwitcher": {
+        "title": "Select Your Preferred Language",
+        "description": "Please choose your preferred language to continue",
+        "continue": "Continue"
     }
   }
