@@ -1,17 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useTranslation } from 'react-i18next';
 import Webcam from "react-webcam";
 import "../styles/FaceAuthenticationPage.css";
 import ModelService from "./ModelService";
 import Loading from "./Loading";
-import FaceDetection from "./FaceDetection";
+import { FaceDetection } from "./FaceDetection"; // Change this import
+import FaceaAuthImage from "./faceAuthGuidelines.jpeg";
+import NoFaceDetected from "./NoFaceDetected.js";
 
 const FaceAuthToo = (props) => {
-  const { t } = useTranslation();
   const webcamRef = useRef(null);
   const [showAuthentication, setShowAuthentication] = useState(false);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
   const[keyGenerated,setKeyGenerated]=useState(false);
+  const[imageData,setImageData]=useState(null);
   const[isLoaded,setIsLoaded]=useState(false);
   const[modelReady,setModelReady]=useState(false);
   const[decryptedModels,setDecryptedModels]=useState(null);
@@ -26,7 +27,9 @@ const FaceAuthToo = (props) => {
   useEffect(() => {
     checkCameraPermission();
   }, []); // Run once on mount
-
+  const verifyUserImage = (imageData) => {
+    return true;
+  };
   // Update the checkCameraPermission function
   const checkCameraPermission = async () => {
     try {
@@ -76,10 +79,10 @@ const FaceAuthToo = (props) => {
       />
       {!showAuthentication ? (
         <div className="guidelines-box">
-          <h2>{t('faceAuth.guidelines.title')}</h2>
+          <h2>Face Authentication Guidelines</h2>
           <img
-            src={t('faceAuth.guidelines.imagePath')}
-            alt={t('faceAuth.guidelines.title')}
+            src={FaceaAuthImage}
+            alt="Face Authentication Guidelines"
             className="guidelines-image"
           />
           <label>
@@ -88,9 +91,9 @@ const FaceAuthToo = (props) => {
               checked={guidelinesAccepted} className="guidelinesCheck"
               onChange={() => setGuidelinesAccepted(!guidelinesAccepted)}
             />
-            {t('faceAuth.guidelines.checkbox')}
+            I have read and understood the guidelines.
           </label>
-          <button onClick={handleProceed}>{t('faceAuth.guidelines.proceed')}</button>
+          <button onClick={handleProceed}>Proceed</button>
         </div>
       ) : !modelReady ? (
         <Loading/>
@@ -99,8 +102,8 @@ const FaceAuthToo = (props) => {
           <Loading/>
         ) : (
           <div className="auth-result">
-            <h2>{isVerified&&liveness ? t('faceAuth.status.real') : t('faceAuth.status.spoof')}</h2>
-            <p>{liveness ? t('faceAuth.status.real') : t('faceAuth.status.spoof')}</p>
+            <h2>{isVerified&&liveness&&verifyUserImage(imageData) ? "Authorization Successful" : "Authorization Failed"}</h2>
+            <p>{liveness ? "Live face detected" : <NoFaceDetected setDetectionDone={setDetectionDone}/>}</p>
           </div>
         )
         
@@ -109,6 +112,7 @@ const FaceAuthToo = (props) => {
           models={decryptedModels} 
           setDetectionDone={setDetectionDone} 
           setLiveness={setLiveness}
+          setImageData={setImageData}
         />
       )}
     </div>

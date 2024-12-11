@@ -141,7 +141,7 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
-  display: none;
+  
 }
 
 .capture-button.visible {
@@ -163,3 +163,12 @@
   background-color: #4D869C;
 }
 
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  margin: 0 auto;
+ 
+}

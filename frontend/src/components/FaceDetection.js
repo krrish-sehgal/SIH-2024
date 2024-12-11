@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Webcam from "react-webcam";
 
-const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
+export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageData }) => {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const [output, setOutput] = useState("Initializing...");
@@ -18,7 +18,56 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
   const lastFrameTime = useRef(null);  // Add this ref
   const [isRetryMode, setIsRetryMode] = useState(false);
   const [isTimerExpired, setIsTimerExpired] = useState(false);
-
+  
+  const captureImage = async () => {
+    const video = webcamRef.current.video;
+    const canvas = document.createElement('canvas');
+    
+    // Set fixed dimensions for the capture
+    const captureWidth = 640;
+    const captureHeight = 640;
+    
+    canvas.width = captureWidth;
+    canvas.height = captureHeight;
+    const context = canvas.getContext('2d');
+    
+    // Ensure proper video dimensions and scaling
+    const aspectRatio = video.videoWidth / video.videoHeight;
+    let drawWidth = captureWidth;
+    let drawHeight = captureWidth / aspectRatio;
+    
+    // Center the image if needed
+    let offsetY = 0;
+    if (drawHeight < captureHeight) {
+      drawHeight = captureHeight;
+      drawWidth = captureHeight * aspectRatio;
+      offsetY = 0;
+    }
+    
+    context.drawImage(
+      video,
+      0,
+      offsetY,
+      drawWidth,
+      drawHeight
+    );
+  
+    // Convert to base64 with quality parameter
+    const base64Image = canvas.toDataURL('image/jpeg', 0.9);
+    
+    // Create download link
+    const downloadLink = document.createElement('a');
+    downloadLink.href = base64Image;
+    downloadLink.download = 'captured-face.jpg';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    
+    return base64Image;
+  setImageData(base64Image);
+    
+    setDetectionDone(true);
+  };
   useEffect(() => {
     const loadModels = async () => {
       try {
@@ -46,6 +95,8 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
           if (prev <= 1) {
             clearInterval(timerRef.current);
             setIsTimerExpired(true);
+            setDetectionDone(true);
+            setLiveness(false);
             return 0;
           }
           return prev - 1;
@@ -171,7 +222,7 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
         const probability = sigmoid(antispoofResults.output.data[0]);
 
         const newOutput = probability > 0.75 ? "Real face detected" : "Spoof detected";
-        setIsRealFace(probability > 0.75);
+       
         if (outputRef.current !== newOutput) {
           outputRef.current = newOutput;
           setOutput(newOutput);
@@ -188,27 +239,58 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
 
   useEffect(() => {
     if (yoloModel && antispoofModel) {
-      processFrame();
+      processFrame();  // Starts the animation frame loop
     }
     return () => {
       if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
+        cancelAnimationFrame(frameRef.current);  // Stops the loop when component unmounts
       }
     };
   }, [yoloModel, antispoofModel]);
 
   const handleCapture = () => {
+    const video = webcamRef.current.video;
+    const canvas = document.createElement('canvas');
+    
+    // Set fixed dimensions for the capture
+    const captureWidth = 640;
+    const captureHeight = 640;
+    
+    canvas.width = captureWidth;
+    canvas.height = captureHeight;
+    const context = canvas.getContext('2d');
+    
+    // Ensure proper video dimensions and scaling
+    const aspectRatio = video.videoWidth / video.videoHeight;
+    let drawWidth = captureWidth;
+    let drawHeight = captureWidth / aspectRatio;
+    
+    // Center the image if needed
+    let offsetY = 0;
+    if (drawHeight < captureHeight) {
+      drawHeight = captureHeight;
+      drawWidth = captureHeight * aspectRatio;
+      offsetY = 0;
+    }
+    
+    context.drawImage(
+      video,
+      0,
+      offsetY,
+      drawWidth,
+      drawHeight
+    );
+  
+    // Convert to base64 with quality parameter
+    const base64Image = canvas.toDataURL('image/jpeg', 0.9);
+    
+    setImageData(base64Image);
     setVerificationComplete(true);
     setLiveness(true);
     setDetectionDone(true);
   };
 
-  const handleRetry = () => {
-    setIsTimerExpired(false);
-    setTimeLeft(30);
-    setIsRetryMode(true);
-    setOutput("Models loaded. Ready for face authentication.");
-  };
+
 
   return (
     <div className="auth-container">
@@ -254,28 +336,16 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
         </div>
         {!verificationComplete && !isTimerExpired && (
           <button 
-            className="capture-button disabled" 
+            className={`capture-button disabled`}
             onClick={handleCapture}
             disabled={output !== "Real face detected"}
           >
             Capture Image
           </button>
         )}
-        {isTimerExpired && (
-          <>
-            <p>Check Your Lighting, Ensure that your face isn't covered and is centered properly.</p>
-            <button 
-              className="retry-button" 
-              onClick={handleRetry}
-            >
-              Try Again
-            </button>
-          </>
-        )}
+        
       </div>
     </div>
   );
 };
-
-export default FaceDetection;
 

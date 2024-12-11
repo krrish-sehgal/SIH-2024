@@ -17,7 +17,7 @@ const Navbar = ({ step, totalSteps }) => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          backgroundColor: "#E8F4FB",
+          backgroundColor: "white", // Light blue background
           padding: "10px 20px",
           position: "relative",
           borderBottom: "none",
