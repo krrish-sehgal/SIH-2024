@@ -105,6 +105,16 @@ button {
 button:hover {
   background-color: #4D869C;
 }
+button:disabled {
+  background-color: #d3d3d3; /* Light grey background */
+  color: #a0a0a0; /* Grey text */
+  cursor: not-allowed; /* Disabled cursor */
+  border: 1px solid #ccc; /* Light grey border */
+}
+
+button:disabled:hover {
+  background-color: #d3d3d3; /* Ensure hover state is also disabled */
+}
 @media (max-width: 768px) {
   .authentication-container,
   .face-auth-container {

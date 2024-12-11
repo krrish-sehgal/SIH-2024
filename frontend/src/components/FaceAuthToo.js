@@ -97,10 +97,11 @@ const FaceAuthToo = (props) => {
           <Loading/>
         ) : (
           <div className="auth-result">
-            <h2>{isVerified ? "Authorization Successful" : "Authorization Failed"}</h2>
+            <h2>{isVerified&&liveness ? "Authorization Successful" : "Authorization Failed"}</h2>
             <p>{liveness ? "Live face detected" : "No live face detected"}</p>
           </div>
         )
+        
       ) : (
         <FaceDetection 
           models={decryptedModels} 

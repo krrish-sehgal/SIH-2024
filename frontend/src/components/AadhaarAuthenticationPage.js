@@ -30,6 +30,7 @@ const AadhaarAuthenticationPage = (props) => {
             value={aadhaar}
             onChange={(e) => setAadhaar(e.target.value)}
             maxLength={12}
+            required
           />
           <button onClick={handleAadhaarSubmit}>Submit Aadhaar</button>
         </div>
@@ -40,6 +41,7 @@ const AadhaarAuthenticationPage = (props) => {
             type="text"
             placeholder="Enter OTP"
             value={otp}
+            required
             onChange={(e) => setOtp(e.target.value)}
           />
           <button onClick={handleOtpSubmit}>Verify OTP</button>

@@ -8,14 +8,11 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
   const [output, setOutput] = useState("Initializing...");
   const [yoloModel, setYoloModel] = useState(null);
   const [antispoofModel, setAntispoofModel] = useState(null);
-  const [lastProcessingTime, setLastProcessingTime] = useState(0);
-  const processingInterval = 100; // Process every 100ms (10 fps)
   const frameRef = useRef(); // Store animation frame reference
   const outputRef = useRef("Initializing..."); // Use ref instead of state for output
   const [timeLeft, setTimeLeft] = useState(30);
-  const [cumulativeRealFaceTime, setCumulativeRealFaceTime] = useState(0);
   const [verificationComplete, setVerificationComplete] = useState(false);
-  const [verified, setVerified] = useState(false);
+  const [isRealFace, setIsRealFace] = useState(false);
   const lastRealFaceTime = useRef(null);
   const timerRef = useRef(null);
   const lastFrameTime = useRef(null);  // Add this ref
@@ -45,10 +42,8 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            setLiveness(cumulativeRealFaceTime >= 10);
-            
+            setLiveness(isRealFace);
             setVerificationComplete(true);
-            
             setDetectionDone(true);
             clearInterval(timerRef.current);
             return 0;
@@ -97,21 +92,6 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
 
   const sigmoid = (x) => 1 / (1 + Math.exp(-x));
 
-  const calculateIoU = (box1, box2) => {
-    const x1 = Math.max(box1.x, box2.x);
-    const y1 = Math.max(box1.y, box2.y);
-    const x2 = Math.min(box1.x + box1.width, box2.x + box2.width);
-    const y2 = Math.min(box1.y + box1.height, box2.y + box2.height);
-
-    if (x2 < x1 || y2 < y1) return 0;
-
-    const intersection = (x2 - x1) * (y2 - y1);
-    const area1 = box1.width * box1.height;
-    const area2 = box2.width * box2.height;
-    const union = area1 + area2 - intersection;
-
-    return intersection / union;
-  };
 
   const processFrame = async () => {
     if (!webcamRef.current || !yoloModel || !antispoofModel) {
@@ -190,18 +170,8 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
         const antispoofResults = await antispoofModel.run(antispoofFeeds);
         const probability = sigmoid(antispoofResults.output.data[0]);
 
-        const newOutput = probability > 0.4 ? "Real face detected" : "Spoof detected";
-        
-        // Update cumulative real face time
-        if (newOutput === "Real face detected" && !verificationComplete) {
-          const timeIncrement = (currentTime - lastFrameTime.current) / 1000;
-          setCumulativeRealFaceTime((prev) => {
-            const newTime = Math.min(prev + timeIncrement, 10);
-           
-            return newTime;
-          });
-        }
-        lastFrameTime.current = currentTime;
+        const newOutput = probability > 0.75 ? "Real face detected" : "Spoof detected";
+        setIsRealFace(probability > 0.75);
         
         if (outputRef.current !== newOutput) {
           outputRef.current = newOutput;
@@ -227,9 +197,13 @@ const FaceDetection = ({ models, setLiveness, setDetectionDone }) => {
       }
     };
   }, [yoloModel, antispoofModel]);
-useEffect(() => {if(cumulativeRealFaceTime>=10){setVerificationComplete(true);
-  setLiveness(true);
-  setDetectionDone(true);}}, [cumulativeRealFaceTime]);
+
+  const handleCapture = () => {
+    setVerificationComplete(true);
+    setLiveness(true);
+    setDetectionDone(true);
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-column">
@@ -242,21 +216,7 @@ useEffect(() => {if(cumulativeRealFaceTime>=10){setVerificationComplete(true);
               <div className="timer-bar" style={{ width: `${(timeLeft/30) * 100}%` }}></div>
             </div>
           )}
-          {!verificationComplete && (
-            <div className="real-face-timer">
-            {/* Progress Bar */}
-            <div className="real-bar-container">
-              <div
-                className="real-bar"
-                style={{
-                  width: `${(cumulativeRealFaceTime / 10) * 100}%`,
-                }}
-              ></div>
-            </div>
-            {/* Time Display */}
-            <span>{cumulativeRealFaceTime.toFixed(1)}s/10s</span>
-          </div>
-          )}
+          
         </div>
         
         <div className="webcam-overlay">
@@ -287,6 +247,15 @@ useEffect(() => {if(cumulativeRealFaceTime>=10){setVerificationComplete(true);
             alt="Overlay" 
           />
         </div>
+        { !verificationComplete && (
+            <button 
+              className="capture-button disabled" 
+              onClick={handleCapture}
+              disabled={output !== "Real face detected"}
+            >
+              Capture Image
+            </button>
+          )}
       </div>
       <div className="example-column">
         <h2>Example</h2>
