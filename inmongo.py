@@ -57,7 +57,8 @@ for i in range(num_entries):
             embedding = embedding[0]
 
         # Extracting embedding vector
-        vector = np.array(embedding["embedding"]).reshape(1, -1)
+        vector = np.array(embedding["embedding"]).flatten()
+        vector.flatten()
 
         # Collect metadata from the user
         name = input("Enter name: ")
@@ -66,9 +67,9 @@ for i in range(num_entries):
         # Prepare the data to store in MongoDB
         data = {
             "image_path": image_path,
-            "embedding": vector.tolist(),  # Convert numpy array to list for MongoDB compatibility
+            "embedding": vector.tolist(),  # Convert the flattened numpy array to a list for MongoDB compatibility
             "name": name,
-            "aadhar": aadhar,
+            "aadhaarNumber": aadhar,
             "timestamp": datetime.datetime.now()
         }
 
