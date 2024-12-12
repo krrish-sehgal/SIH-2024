@@ -6,7 +6,7 @@ const Navbar = ({ step, totalSteps }) => {
   const { t } = useTranslation();
   const progressPercentage = (step / totalSteps) * 100;
 
-  const gradientStart = "#4D869C";
+  const gradientStart = "#041759";
   const gradientMiddle = "#7AB2B2";
   const gradientEnd = "#CDE8E5";
 
@@ -63,7 +63,7 @@ const Navbar = ({ step, totalSteps }) => {
           height: "5px",
           transition: "background 0.3s ease-in-out",
           background: `linear-gradient(to right, 
-          #4D869C ${progressPercentage}%,  
+          #041759 ${progressPercentage}%,  
           #CDE8E5 )`,
         }}
       ></div>

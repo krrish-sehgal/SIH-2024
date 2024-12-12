@@ -29,7 +29,7 @@
 }
 
 .line.completed {
-  background-color: #000046;
+  background-color: #041759;
 }
 
 .step {
@@ -61,7 +61,7 @@
 }
 
 .completed {
-  background-color: #000000; /* Black for completed steps */
+  background-color: #041759; /* Black for completed steps */
 }
 
 .active {

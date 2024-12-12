@@ -18,7 +18,7 @@
 
 .language-switcher button {
   padding: 6px 12px;
-  border: 1px solid #4D869C;
+  border: 1px solid #041759;
   border-radius: 4px;
   background: white;
   cursor: pointer;
@@ -26,7 +26,7 @@
 }
 
 .language-switcher button.active {
-  background: #4D869C;
+  background: #041759;
   color: white;
 }
 
@@ -84,8 +84,8 @@
 }
 
 .language-button.active {
-  border-color: #4D869C;
-  background: #4D869C;
+  border-color: #041759;
+  background: #041759;
 }
 
 .language-button.active .lang-label,
@@ -111,7 +111,7 @@
 .next-button {
   padding: 14px 36px;
   font-size: 1.1rem;
-  background: #4D869C;
+  background: #041759;
   color: white;
   border: none;
   border-radius: 8px;
