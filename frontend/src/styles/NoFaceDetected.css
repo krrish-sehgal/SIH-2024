@@ -1,9 +1,10 @@
 .no-face-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 80vh;
-  padding: 2rem;
+  align-items: flex-start; /* Change from center to flex-start */
+  min-height: 60vh; /* Reduce from 80vh */
+  padding: 1rem; /* Reduce from 2rem */
+  margin-top: 80px; /* Add margin-top to account for fixed navbar */
 }
 
 .verification-box {
@@ -13,8 +14,8 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   width: 90%;
   max-width: 1000px;
-  padding: 2rem;
-  gap: 2rem;
+  padding: 1.5rem; /* Reduce from 2rem */
+  gap: 1.5rem; /* Reduce from 2rem */
 }
 
 .left-section {
@@ -80,5 +81,12 @@
   .right-section {
     border-left: none;
     border-top: 1px solid #e0e0e0;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .no-face-container {
+    margin-top: 60px; /* Smaller margin for mobile */
+    min-height: 50vh; /* Even smaller height for mobile */
   }
 }
