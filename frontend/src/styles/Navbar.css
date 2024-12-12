@@ -9,7 +9,7 @@ nav{
 }
 
 .gradient-line {
-  height: 4px; /* Adjust height as needed */
+  height: 30px; /* Adjust height as needed */
   background: linear-gradient(to right, #000046, #041759);
   position: fixed;
   top: 50px; /* Adjust based on navbar height */

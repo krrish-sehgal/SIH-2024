@@ -7,8 +7,8 @@ const Navbar = ({ step, totalSteps }) => {
   const progressPercentage = (step / totalSteps) * 100;
 
   const gradientStart = "#041759";
-  const gradientMiddle = "#7AB2B2";
-  const gradientEnd = "#CDE8E5";
+  const gradientMiddle = "#19AAD7";
+  const gradientEnd = "#19AAD7";
 
   return (
     <div>
@@ -60,11 +60,11 @@ const Navbar = ({ step, totalSteps }) => {
       <div
         style={{
           width: "100%",
-          height: "5px",
+          height: "10px",
           transition: "background 0.3s ease-in-out",
           background: `linear-gradient(to right, 
           #041759 ${progressPercentage}%,  
-          #CDE8E5 )`,
+          #19AAD7 )`,
         }}
       ></div>
     </div>
