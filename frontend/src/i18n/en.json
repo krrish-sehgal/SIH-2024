@@ -29,7 +29,9 @@
         "camera": "Face the camera directly and keep a neutral expression",
         "distance": "Maintain a distance of 30-50 cm from the camera",
         "visibility": "Ensure your face is clearly visible and not partially covered",
-        "connection": "Use a stable internet connection"
+        "connection": "Use a stable internet connection",
+        "liveness1": "Ensure you are in a well-lit area for the liveness check.",
+        "liveness2": "Follow the on-screen instructions carefully for successful verification."
       },
       "capture": "Capture Image",
       "retry": "Try Again",
@@ -54,7 +56,7 @@
         "tooBright": "Too bright! Move away from direct light",
         "tooDark": "Too dark! Move to a brighter area",
         "noFace": "Position your face in frame",
-        "alignment": "Center your face",
+        "alignment": "Keep your face aligned...",
         "lowLight": "Move to a brighter area",
         "faceDetected": "Looks Good! Face Detected"
       }
