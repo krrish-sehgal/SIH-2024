@@ -1,10 +1,9 @@
 /* global ort */
 import React, { useRef, useEffect, useState } from 'react';
 import Webcam from "react-webcam";
-import { useTranslation } from "react-i18next"; // Add this import
-
-export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageData }) => {
-  const { t } = useTranslation(); // Add translation hook
+import { useTranslation } from "react-i18next";
+export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageData }) => {
+    const { t, i18n } = useTranslation();
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const [output, setOutput] = useState("Initializing...");
@@ -20,6 +19,8 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageD
   const lastFrameTime = useRef(null);  // Add this ref
   const [isRetryMode, setIsRetryMode] = useState(false);
   const [isTimerExpired, setIsTimerExpired] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [avgBrightness, setAvgBrightness] = useState(0);
   
   const captureImage = async () => {
     const video = webcamRef.current.video;
@@ -74,21 +75,21 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageD
     const loadModels = async () => {
       try {
         console.log(models);
-        setOutput(t("faceAuth.status.loading"));
+        setOutput("Loading models...");
         const yoloBuffer = models[1].decryptedModel;
         const antispoofBuffer = models[0].decryptedModel;
         const yoloSession = await ort.InferenceSession.create(new Uint8Array(yoloBuffer));
         const antispoofSession = await ort.InferenceSession.create(new Uint8Array(antispoofBuffer));
         setYoloModel(yoloSession);
         setAntispoofModel(antispoofSession);
-        setOutput(t("faceAuth.status.ready"));
+        setOutput("Models loaded. Ready for face authentication.");
       } catch (error) {
         console.error("Error loading models:", error);
-        setOutput(t("faceAuth.status.error"));
+        setOutput("Failed to load models. Check console for details.");
       }
     };
     loadModels();
-  }, [models, t]);
+  }, [models]);
 
   useEffect(() => {
     if (yoloModel && antispoofModel && !verificationComplete) {
@@ -145,6 +146,46 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageD
 
   const sigmoid = (x) => 1 / (1 + Math.exp(-x));
 
+  const analyzeBrightness = (ctx, canvas) => {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    let totalBrightness = 0;
+    let pixelCount = data.length / 4;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const brightness = (r + g + b) / 3;
+      totalBrightness += brightness;
+    }
+
+    return totalBrightness / pixelCount;
+  };
+
+  const getFeedbackMessage = (brightness, faceDetected, bestBox) => {
+    if (brightness > 120) {
+      return t("faceAuth.feedback.tooBright");
+    } else if (brightness < 50) {
+      return t("faceAuth.feedback.tooDark");
+    }
+
+    if (!faceDetected) {
+      return t("faceAuth.feedback.noFace");
+    }
+
+    // Check face alignment based on bestBox position
+    if (bestBox) {
+      const centerX = bestBox.x + (bestBox.width / 2);
+      const centerY = bestBox.y + (bestBox.height / 2);
+      
+      if (Math.abs(centerX - 0.5) > 0.2 || Math.abs(centerY - 0.5) > 0.2) {
+        return t("faceAuth.feedback.alignment");
+      }
+    }
+
+    return "";
+  };
 
   const processFrame = async () => {
     if (!webcamRef.current || !yoloModel || !antispoofModel) {
@@ -211,6 +252,14 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageD
         ctx.lineWidth = 2;
         ctx.stroke();
 
+        // Calculate brightness
+        const brightness = analyzeBrightness(ctx, canvas);
+        setAvgBrightness(brightness);
+
+        // Get appropriate feedback
+        const feedback = getFeedbackMessage(brightness, faceDetected, bestBox);
+        setFeedbackMessage(feedback);
+
         // Only run anti-spoofing if face detected
         const antispoofFeeds = {
           input: new ort.Tensor(
@@ -223,13 +272,14 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageD
         const antispoofResults = await antispoofModel.run(antispoofFeeds);
         const probability = sigmoid(antispoofResults.output.data[0]);
 
-        const newOutput = probability > 0.75 ? t("faceAuth.status.real") : t("faceAuth.status.spoof");
+        const newOutput = probability > 0.75 ? "Real face detected" : "Spoof detected";
        
         if (outputRef.current !== newOutput) {
           outputRef.current = newOutput;
           setOutput(newOutput);
         }
       } else {
+        setFeedbackMessage(t("faceAuth.feedback.noFace"));
         lastFrameTime.current = currentTime;
       }
     } catch (error) {
@@ -297,7 +347,11 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageD
   return (
     <div className="auth-container">
       <div className="auth-column">
-        <h2>{t("faceAuth.title")}</h2>
+        <h2>Face Authentication</h2>
+        
+        {/* Show feedback message if any */}
+       
+
         <div className="status-row">
           {(timeLeft>=1) && (
             <div className="mini-timer">
@@ -306,6 +360,11 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageD
             </div>
           )}
         </div>
+        {feedbackMessage&&output==="Spoof detected"&&(
+          <div className="feedback-message">
+            {feedbackMessage}
+          </div>
+        )}
         
         <div className="webcam-overlay">
           <Webcam
@@ -332,7 +391,7 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageD
           />
           <img 
             className="overlay-circle" 
-            src={`face-${(output===t("faceAuth.status.ready")||output===t("faceAuth.status.loading"))?"mid":(output===t("faceAuth.status.real")?"accepted":"rejected")}.png`} 
+            src={`face-${(output==="Models loaded. Ready for face authentication."||output==="Loading models...")?"mid":(output==="Real face detected"?"accepted":"rejected")}.png`} 
             alt="Overlay" 
           />
         </div>
@@ -340,9 +399,9 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageD
           <button 
             className={`capture-button disabled`}
             onClick={handleCapture}
-            disabled={output !== t("faceAuth.status.real")}
+            disabled={output !== "Real face detected"}
           >
-            {t("faceAuth.capture")}
+            Capture Image
           </button>
         )}
         

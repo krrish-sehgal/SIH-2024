@@ -36,11 +36,20 @@
         "livenessCheckFailed": "Liveness Check Failed",
         "verifying": "Verifying...",
         "authSuccess": "Authorization Successful",
-        "authFailed": "Authorization Failed"
+        "authFailed": "Authorization Failed",
+        "poorLighting": "Poor lighting detected"
       },
       "lightingPrompt": "Check Your Lighting, Ensure that your face isn't covered and is centered properly.",
+      "lightingPrompt2": "Check Your Face Alignment and try again.",
       "camera": {
         "enablePrompt": "Please enable camera access in your browser settings and refresh the page."
+      },
+      "feedback": {
+        "tooBright": "Too bright! Move away from direct light",
+        "tooDark": "Too dark! Move to a brighter area",
+        "noFace": "Position your face in frame",
+        "alignment": "Center your face",
+        "lowLight": "Move to a brighter area"
       }
     },
     "endPage": {
