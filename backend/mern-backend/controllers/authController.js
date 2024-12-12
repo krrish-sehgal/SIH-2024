@@ -1,5 +1,5 @@
 const User = require('../Models/user');
-
+const cookieParser = require('cookie-parser');
 exports.verifyOTP = async (req, res) => {
     try {
         const { aadhaarNumber, otp } = req.body;
@@ -19,6 +19,7 @@ exports.verifyOTP = async (req, res) => {
         }
 
         // Create session
+      
         req.session.userId = user._id;
         req.session.aadhaarNumber = user.aadhaarNumber;
 
@@ -36,18 +37,19 @@ exports.verifyOTP = async (req, res) => {
 
 exports.fetchUserDetails = async (req, res) => {
     try {
-        // Check if user is in session
-        if (!req.session.userId || !req.session.aadhaarNumber) {
-            return res.status(401).json({ message: "Please login first" });
+        
+        const { name, aadhaarNumber } = req.body;
+        console.log("Received in body:", { name, aadhaarNumber });
+
+        if (!name || !aadhaarNumber) {
+            return res.status(401).json({ message: "Name and Aadhaar number are required" });
         }
 
-        // Find user by aadhaar number
-        const user = await User.findOne({ aadhaarNumber: req.session.aadhaarNumber });
+        const user = await User.findOne({ aadhaarNumber });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Return user details
         res.status(200).json({
             name: user.name,
             aadhaarNumber: user.aadhaarNumber,

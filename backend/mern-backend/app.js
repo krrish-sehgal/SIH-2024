@@ -63,9 +63,11 @@ store.on("error", (error) => {
 });
 const apiRoutes = require("./routes/api.js");
 const authRoutes = require("./routes/auth.js"); // Add this line
+const { Credentials } = require("aws-sdk");
 
 const corsOptions = {
-    origin: "*",                   
+    origin: "http://localhost:3000",
+    credentials: true,                   
     methods: "GET,POST",              
     allowedHeaders: "Content-Type",   
   };

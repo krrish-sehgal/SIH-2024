@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
+import UpdateVerificationOverlay from "./UpdateVerificationOverlay";
+import ModelService from "./ModelService";
 import "../styles/UpdateAadhaar.css";
 
 const UpdateAadhaar = () => {
-
+  const REACT_APP_FETCHURL = process.env.REACT_APP_FETCH_USERDATA;
+  
   const [formData, setFormData] = useState({
     aadharNumber: "",
     name: "",
@@ -16,6 +19,61 @@ const UpdateAadhaar = () => {
     mobileNumber: "",
   });
 
+  const [showVerification, setShowVerification] = useState(false);
+  const [decryptedModels, setDecryptedModels] = useState(null);
+  const [modelReady, setModelReady] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userData = JSON.parse(sessionStorage.getItem('user'));
+        console.log("User data from session:", userData);
+        const response = await fetch(REACT_APP_FETCHURL, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ aadhaarNumber: userData.aadhaarNumber , name: userData.name}),
+          credentials: 'include' // if you need to include cookies
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new TypeError("Received non-JSON response from server");
+        }
+
+        const user = await response.json();
+        
+        if (!user) {
+          throw new Error('No data received from server');
+        }
+
+        setFormData({
+          aadharNumber: user.aadhaarNumber || '',
+          name: user.name || '',
+          dob: user.dob || '',
+          street: user.address?.street || '',
+          locality: user.address?.locality || '',
+          district: user.address?.district || '',
+          state: user.address?.state || '',
+          pincode: user.pincode || '',
+          mobileNumber: user.mobile || ''
+        });
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        // Optionally add user notification here
+      }
+    };
+
+    fetchUserData();
+  }, [REACT_APP_FETCHURL]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -24,10 +82,29 @@ const UpdateAadhaar = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted: ", formData);
-    // Add your API call or logic here
+    setShowVerification(true);
+  };
+
+  const handleVerificationSuccess = async () => {
+    try {
+      // Make your API call to update the data here
+      const response = await fetch('/your-update-endpoint', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        setUpdateSuccess(true);
+        setShowVerification(false);
+      }
+    } catch (error) {
+      console.error('Error updating data:', error);
+    }
   };
 
   return (
@@ -130,7 +207,26 @@ const UpdateAadhaar = () => {
             Update
           </button>
         </form>
+
+        {showVerification && (
+          <UpdateVerificationOverlay
+            models={decryptedModels}
+            onSuccess={handleVerificationSuccess}
+            onClose={() => setShowVerification(false)}
+          />
+        )}
+
+        {updateSuccess && (
+          <div className="success-notification">
+            Update successful!
+          </div>
+        )}
       </div>
+      
+      <ModelService 
+        setDecryptedModels={setDecryptedModels}
+        setModelReady={setModelReady}
+      />
     </>
   );
 };

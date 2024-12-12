@@ -41,7 +41,7 @@ const FaceAuthToo = (props) => {
 
       // Remove the data URI prefix if present
       const cleanImageData = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
-
+      console.log(cleanImageData)
       const response = await fetch(process.env.REACT_APP_FACE_VERIFY_URL, {
         method: 'POST',
         headers: {
@@ -50,13 +50,14 @@ const FaceAuthToo = (props) => {
         body: JSON.stringify({
           aadhaarNumber: userData.aadhaarNumber,
           image: cleanImageData,
-          timestamp: new Date().toISOString()
+          timestamp :new Date().toISOString().slice(0, 23) + "+00:00"
         })
       });
       console.log(imageData);
   
       const data = await response.json();
-      return data.is_authorized;
+      console.log(data);
+      return data.is_verified;
       console.log("Data returned");
     } catch (error) {
       console.error( error);

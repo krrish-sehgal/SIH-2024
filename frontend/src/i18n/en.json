@@ -48,10 +48,10 @@
     },
     "progressBar": {
       "steps": {
-        "aadhaar": "Aadhaar Verification",
-        "otp": "OTP Verification",
-        "face": "Face Authentication",
-        "complete": "Complete"
+        "aadhaar": "Language",
+        "otp": "Aadhar Number",
+        "face": "OTP Verification",
+        "complete": "Face Auth"
       }
     },
     "languageSwitcher": {
