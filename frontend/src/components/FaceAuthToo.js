@@ -143,16 +143,19 @@ const FaceAuthToo = (props) => {
         isVerifying ? (
           <Loading/>
         ) : (
-          <div className="auth-result">
-            <h2>
-              {!liveness ? t("faceAuth.status.livenessCheckFailed") :
-               !verificationComplete ? t("faceAuth.status.verifying") :
-               faceVerified ? t("faceAuth.status.authSuccess") : t("faceAuth.status.authFailed")}
-            </h2>
-            <p>{liveness &&faceVerified? t("faceAuth.status.real") : <NoFaceDetected setVerificationComplete={setVerificationComplete} setDetectionDone={setDetectionDone}/>}</p>
-          </div>
+          verificationComplete && faceVerified ? (
+            <div className="auth-result">
+              <h2>{t("faceAuth.status.authSuccess")}</h2>
+              <p>{t("faceAuth.status.real")}</p>
+            </div>
+          ) : (
+            <NoFaceDetected 
+              setVerificationComplete={setVerificationComplete} 
+              setDetectionDone={setDetectionDone}
+              failureType={!liveness ? 'liveness' : !faceVerified ? 'verification' : 'detection'}
+            />
+          )
         )
-        
       ) : (
         <FaceDetection 
           models={decryptedModels} 

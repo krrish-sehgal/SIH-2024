@@ -8,9 +8,12 @@
 
 .language-switcher {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 20px;
-  justify-content: center;
-  margin: 20px 0;
+  margin: 20px auto;
+  width: 100%;
+  max-width: 500px;
 }
 
 .language-switcher button {
@@ -33,12 +36,19 @@
   align-items: center;
   min-height: 80vh;
   padding: 20px;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .language-content {
   text-align: center;
   max-width: 600px;
   width: 100%;
+  margin: 0 auto;
+  padding: 0 15px;
+  box-sizing: border-box;
 }
 
 .language-content h1 {
@@ -54,6 +64,8 @@
 
 /* Ensure the language buttons are bigger and more prominent */
 .language-button {
+  width: 100%;
+  max-width: 300px;
   min-width: 180px;
   padding: 24px;
   margin: 10px;
@@ -113,4 +125,71 @@
   background: #3a6577;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(77, 134, 156, 0.2);
+}
+
+/* Add responsive styles */
+@media screen and (max-width: 768px) {
+  .language-switcher {
+    flex-direction: column;
+    gap: 10px;
+    max-width: 100%;
+    padding: 0 20px;
+    box-sizing: border-box;
+  }
+
+  .language-page {
+    padding: 20px;
+  }
+
+  .language-content {
+    padding: 0 10px;
+    margin: 0 auto;
+  }
+
+  .language-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .language-content p {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .language-button {
+    min-width: 100%;
+    padding: 16px;
+    max-width: 100%;
+  }
+
+  .lang-label {
+    font-size: 0.9rem;
+  }
+
+  .lang-native {
+    font-size: 1.2rem;
+  }
+
+  .next-button {
+    width: 100%;
+    padding: 12px 24px;
+    font-size: 1rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .language-page {
+    padding: 10px;
+  }
+
+  .language-content {
+    padding: 0 5px;
+  }
+
+  .language-content h1 {
+    font-size: 1.25rem;
+  }
+
+  .language-button {
+    padding: 12px;
+  }
 }

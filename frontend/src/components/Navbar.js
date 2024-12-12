@@ -18,7 +18,7 @@ const Navbar = ({ step, totalSteps }) => {
           alignItems: "center",
           justifyContent: "space-between",
           backgroundColor: "white", // Light blue background
-          padding: "10px 20px",
+          padding: "8px 16px",  // Reduced padding
           position: "relative",
           borderBottom: "none",
         }}
@@ -27,7 +27,7 @@ const Navbar = ({ step, totalSteps }) => {
           <img
             src="emblem.png"
             alt="Government Emblem"
-            style={{ height: "10vh", marginRight: "10px" }}
+            style={{ height: "8vh", marginRight: "8px" }}  // Reduced height and margin
           />
           <div>
             <h1
@@ -54,7 +54,7 @@ const Navbar = ({ step, totalSteps }) => {
         <img
           src="aadhaar-logo.png"
           alt="Aadhaar Logo"
-          style={{ height: "10vh" }}
+          style={{ height: "8vh" }}  // Reduced height
         />
       </nav>
       <div

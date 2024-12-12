@@ -23,7 +23,13 @@
         "checkbox": "I have read and understood the guidelines.",
         "proceed": "Proceed",
         "imagePath": "faceAuthGuidelines-en.jpeg",
-        "acceptRequired": "Please accept the guidelines before proceeding."
+        "acceptRequired": "Please accept the guidelines before proceeding.",
+        "lighting": "Ensure proper lighting - avoid dark or extremely bright environments",
+        "coverings": "Remove face coverings like masks, sunglasses, or heavy makeup",
+        "camera": "Face the camera directly and keep a neutral expression",
+        "distance": "Maintain a distance of 30-50 cm from the camera",
+        "visibility": "Ensure your face is clearly visible and not partially covered",
+        "connection": "Use a stable internet connection"
       },
       "capture": "Capture Image",
       "retry": "Try Again",

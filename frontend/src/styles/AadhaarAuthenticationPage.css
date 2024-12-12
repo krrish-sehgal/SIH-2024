@@ -23,7 +23,7 @@
     padding: 12px 20px;
     font-size: 16px;
     color: #fff;
-    background-color: #7AB2B2;
+    background-color: #19AAD7; /* Changed from #7AB2B2 */
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -40,6 +40,14 @@
 button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+}
+
+button:hover {
+  background-color: #1590B7; /* Slightly darker shade for hover */
+}
+
+.aadhaar-submit-button {
+  background-color: #1590B7;
 }
 
 .otp-input-container {
