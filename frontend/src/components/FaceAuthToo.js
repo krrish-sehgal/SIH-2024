@@ -149,7 +149,7 @@ const FaceAuthToo = (props) => {
                !verificationComplete ? t("faceAuth.status.verifying") :
                faceVerified ? t("faceAuth.status.authSuccess") : t("faceAuth.status.authFailed")}
             </h2>
-            <p>{liveness &&faceVerified? t("faceAuth.status.real") : <NoFaceDetected setDetectionDone={setDetectionDone}/>}</p>
+            <p>{liveness &&faceVerified? t("faceAuth.status.real") : <NoFaceDetected setVerificationComplete={setVerificationComplete} setDetectionDone={setDetectionDone}/>}</p>
           </div>
         )
         
