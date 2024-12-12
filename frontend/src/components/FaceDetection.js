@@ -21,6 +21,7 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
   const [isTimerExpired, setIsTimerExpired] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [avgBrightness, setAvgBrightness] = useState(0);
+  const [feedbackType, setFeedbackType] = useState(""); // Add this state
   
   const captureImage = async () => {
     const video = webcamRef.current.video;
@@ -165,26 +166,25 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
 
   const getFeedbackMessage = (brightness, faceDetected, bestBox) => {
     if (brightness > 120) {
-      return t("faceAuth.feedback.tooBright");
+      return { message: t("faceAuth.feedback.tooBright"), type: "too-bright" };
     } else if (brightness < 50) {
-      return t("faceAuth.feedback.tooDark");
+      return { message: t("faceAuth.feedback.tooDark"), type: "too-dark" };
     }
 
     if (!faceDetected) {
-      return t("faceAuth.feedback.noFace");
+      return { message: t("faceAuth.feedback.noFace"), type: "no-face" };
     }
 
-    // Check face alignment based on bestBox position
     if (bestBox) {
       const centerX = bestBox.x + (bestBox.width / 2);
       const centerY = bestBox.y + (bestBox.height / 2);
       
       if (Math.abs(centerX - 0.5) > 0.2 || Math.abs(centerY - 0.5) > 0.2) {
-        return t("faceAuth.feedback.alignment");
+        return { message: t("faceAuth.feedback.alignment"), type: "alignment" };
       }
     }
 
-    return "";
+    return { message: "", type: "" };
   };
 
   const processFrame = async () => {
@@ -258,7 +258,8 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
 
         // Get appropriate feedback
         const feedback = getFeedbackMessage(brightness, faceDetected, bestBox);
-        setFeedbackMessage(feedback);
+        setFeedbackMessage(feedback.message);
+        setFeedbackType(feedback.type);
 
         // Only run anti-spoofing if face detected
         const antispoofFeeds = {
@@ -272,7 +273,7 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
         const antispoofResults = await antispoofModel.run(antispoofFeeds);
         const probability = sigmoid(antispoofResults.output.data[0]);
 
-        const newOutput = probability > 0.75 ? "Real face detected" : "Spoof detected";
+        const newOutput = probability > 0.65 ? "Real face detected" : "Spoof detected";
        
         if (outputRef.current !== newOutput) {
           outputRef.current = newOutput;
@@ -280,6 +281,7 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
         }
       } else {
         setFeedbackMessage(t("faceAuth.feedback.noFace"));
+        setFeedbackType("no-face");
         lastFrameTime.current = currentTime;
       }
     } catch (error) {
@@ -350,7 +352,11 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
         <h2>Face Authentication</h2>
         
         {/* Show feedback message if any */}
-       
+        {feedbackMessage && (
+          <div className={`feedback-message ${feedbackType}`}>
+            {feedbackMessage}
+          </div>
+        )}
 
         <div className="status-row">
           {(timeLeft>=1) && (
@@ -360,11 +366,7 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
             </div>
           )}
         </div>
-        {feedbackMessage&&(
-          <div className="feedback-message">
-            {feedbackMessage}
-          </div>
-        )}
+    
         
         <div className="webcam-overlay">
           <Webcam
