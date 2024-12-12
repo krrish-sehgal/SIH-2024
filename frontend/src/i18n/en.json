@@ -55,7 +55,8 @@
         "tooDark": "Too dark! Move to a brighter area",
         "noFace": "Position your face in frame",
         "alignment": "Center your face",
-        "lowLight": "Move to a brighter area"
+        "lowLight": "Move to a brighter area",
+        "faceDetected": "Looks Good! Face Detected"
       }
     },
     "endPage": {

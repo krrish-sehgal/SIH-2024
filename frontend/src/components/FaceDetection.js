@@ -360,7 +360,7 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
             </div>
           )}
         </div>
-        {feedbackMessage&&output==="Spoof detected"&&(
+        {feedbackMessage&&(
           <div className="feedback-message">
             {feedbackMessage}
           </div>
