@@ -35,6 +35,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+  position: relative;
 }
 
 .circle {
@@ -63,9 +64,21 @@
 }
 
 .step-title {
-  font-size: 12px;
-  max-width: 70px;
+  display: block;
+  font-size: 14px; /* Increased font size */
+  line-height: 1.2;
+  width: 100%;
+  text-align: center;
+  white-space: normal; /* Allow text to wrap */
   word-wrap: break-word;
+  max-width: none; /* Remove max-width restriction */
+  overflow: visible; /* Show all text */
+}
+
+.step-title-container {
+  width: 150px; /* Increased width to show more text */
+  text-align: center;
+  margin-top: 10px; /* Add space between circle and text */
 }
 
 @media screen and (max-width: 768px) {
@@ -76,10 +89,14 @@
   }
 
   .step-title {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .line {
     margin: 0 5px;
+  }
+
+  .step-title-container {
+    width: 100px;
   }
 }

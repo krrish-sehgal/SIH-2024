@@ -22,7 +22,9 @@ const ProgressBar = ({ steps, currentStep }) => {
               <div className={`circle ${isActive ? "active" : isCompleted ? "completed" : "pending"}`}>
                 {index + 1}
               </div>
-              <span className="step-title">{t(`progressBar.steps.${step}`)}</span>
+              <div className="step-title-container">
+                <span className="step-title">{t(`progressBar.steps.${step}`)}</span>
+              </div>
             </div>
             {!isLastStep && <div className={`line ${isCompleted ? 'completed' : 'pending'}`} />}
           </div>
