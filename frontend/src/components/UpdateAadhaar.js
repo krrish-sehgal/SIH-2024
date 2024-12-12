@@ -111,6 +111,7 @@ const UpdateAadhaar = () => {
     <>
       <Navbar step={4} totalSteps={4} />
       <div className="update-form-container">
+        <h2>Update Details</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <input
