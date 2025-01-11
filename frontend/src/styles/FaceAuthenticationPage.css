@@ -55,7 +55,7 @@
 
 .guidelines-box button {
   padding: 10px 20px;
-  background-color: #7AB2B2;
+  background-color: #19AAD7;
   color: white;
   border: none;
   border-radius: 4px;
@@ -66,7 +66,7 @@
 }
 
 .guidelines-box button:hover {
-  background-color: #4D869C;
+  background-color: #041759;
 }
 
 .auth-container {
@@ -107,7 +107,7 @@
 
 button {
   padding: 10px 20px;
-  background-color: #7AB2B2;
+  background-color: #19AAD7;
   color: white;
   border: none;
   border-radius: 4px;
@@ -115,7 +115,7 @@ button {
 }
 
 button:hover {
-  background-color: #4D869C;
+  background-color: #041759;
 }
 
 button:disabled {

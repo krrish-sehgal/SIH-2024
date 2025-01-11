@@ -2,17 +2,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 5vh 10px;
+  margin: 0 auto;
   flex-wrap: wrap;
   gap: 10px;
-  margin-left: 10%;
-    margin-right: 10%;
+  max-width: 1000px;
+  width: 80%;
 }
 
 .step-container {
   display: flex;
   align-items: center;
   flex: 1;
+  /* Remove height property */
 }
 
 .step-container:last-child {
@@ -23,11 +24,12 @@
   height: 2px;
   flex: 1;
   margin: 0 10px;
-  background-color: #CDE8E5;
+  background-color: #fff;
+  /* Remove position and top properties */
 }
 
 .line.completed {
-  background-color: #4D869C;
+  background-color: #041759;
 }
 
 .step {
@@ -36,36 +38,39 @@
   align-items: center;
   text-align: center;
   position: relative;
+  margin-top: 30px; /* Add top margin here */
+  /* Remove margin-bottom */
 }
 
 .circle {
-  width: 10vh;
-  height: 10vh;
+  width: 50px;  /* Fixed size instead of viewport units */
+  height: 50px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   font-weight: bold;
   color: white;
+  background-color: #d3d3d3; /* Default color for pending steps */
   margin-bottom: 8px;
+  font-size: 16px;  /* Added explicit font size */
 }
 
 .pending {
-  background-color: #CDE8E5;
+  background-color: #d3d3d3; /* Light grey for pending steps */
 }
 
 .completed {
-  background-color: #4D869C;
+  background-color: #041759; /* Black for completed steps */
 }
 
 .active {
-  background-color: #7AB2B2;
+  background-color: #19AAD7; /* Blue for the current step */
   box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.3);
 }
 
 .step-title {
-  display: block;
-  font-size: 14px; /* Increased font size */
+  font-size: 13px;
   line-height: 1.2;
   width: 100%;
   text-align: center;
@@ -76,12 +81,19 @@
 }
 
 .step-title-container {
-  width: 150px; /* Increased width to show more text */
+  width: 120px;
   text-align: center;
-  margin-top: 10px; /* Add space between circle and text */
+  margin-top: 8px;
 }
 
 @media screen and (max-width: 768px) {
+  .progress-bar {
+    width: 90%;
+    padding-top: 3vh;  /* Adjust padding for mobile */
+    margin: 0 5px;
+    gap: 5px;
+  }
+
   .circle {
     width: 40px;
     height: 40px;
@@ -89,14 +101,79 @@
   }
 
   .step-title {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .line {
-    margin: 0 5px;
+    margin: 0 3px;
+    top: -12px; /* Adjust for smaller circle */
   }
 
   .step-title-container {
-    width: 100px;
+    width: 80px;
+  }
+
+  .step-container {
+    height: 40px; /* Match circle height */
+  }
+
+  .step {
+    margin-top: 20px; /* Adjust margin for smaller screens */
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .progress-bar {
+    width: 95%;
+    padding-top: 2vh;  /* Adjust padding for smaller screens */
+    margin: 0 2px;
+    gap: 2px;
+  }
+
+  .circle {
+    width: 35px;
+    height: 35px;
+    font-size: 12px;
+  }
+
+  .step-title {
+    font-size: 9px;
+  }
+
+  .line {
+    margin: 0 2px;
+    top: -10px; /* Adjust for smaller circle */
+  }
+
+  .step-title-container {
+    width: 60px;
+  }
+
+  .step-container {
+    height: 35px; /* Match circle height */
+  }
+
+  .step {
+    margin-top: 15px; /* Adjust margin for even smaller screens */
+  }
+}
+
+@media screen and (max-width: 320px) {
+  .progress-bar {
+    transform: scale(0.9);
+  }
+  
+  .circle {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+
+  .step-container {
+    height: 30px; /* Match circle height */
+  }
+
+  .line {
+    top: -8px; /* Adjust for smaller circle */
   }
 }

@@ -4,7 +4,6 @@ const bodyParser = require("body-parser");
 const session = require('express-session');        
 const cors = require("cors"); // Import CORS
 const MongoDBStore = require('connect-mongodb-session')(session);
-// const promClient = require("prom-client");
 
 require("dotenv").config();
 const MONGODB_URI = process.env.MONGODB_URI; // Changed from MONGODB_URI to MONGO_DB_URI
@@ -62,41 +61,6 @@ const store = new MongoDBStore({
 store.on("error", (error) => {
   console.error("Session store error:", error);
 });
-
-// Initialize the metrics
-const httpRequestDurationMicroseconds = new promClient.Histogram({
-  name: "http_request_duration_seconds",
-  help: "Duration of HTTP requests in seconds",
-  labelNames: ["route", "status_code"], // Add all required labels here
-  buckets: [0.1, 0.5, 1, 2.5, 5, 10]
-});
-
-const httpRequestCount = new promClient.Counter({
-  name: "http_requests_total",
-  help: "Total number of HTTP requests",
-  labelNames: ["method", "route", "status_code"]
-});
-
-// Initialize custom metrics
-const authenticationCounter = new promClient.Counter({
-  name: 'authentication_requests_total',
-  help: 'Total number of authentication requests',
-  labelNames: ['status']
-});
-
-// Middleware to track the duration and count of requests
-app.use(async (req, res, next) => {
-  const end = httpRequestDurationMicroseconds.startTimer();
-  res.on("finish", () => {
-    httpRequestCount.inc({
-      method: req.method,
-      route: req.originalUrl,
-      status_code: res.statusCode,
-    });
-    end({ route: req.originalUrl, status_code: res.statusCode });
-  });
-  next();
-});
 const apiRoutes = require("./routes/api.js");
 const authRoutes = require("./routes/auth.js"); // Add this line
 const { Credentials } = require("aws-sdk");
@@ -124,20 +88,6 @@ app.use(
     store: store, 
   })
 );
-app.get("/metrics", async (req, res) => {
-  res.setHeader('Content-Type', promClient.register.contentType);
-  try {
-    const metrics = await promClient.register.metrics();
-    // Print metrics to console
-    console.log("\n=== PROMETHEUS METRICS ===");
-    console.log(metrics);
-    console.log("========================");
-    res.end(metrics);
-  } catch (err) {
-    console.error('Error generating metrics:', err);
-    res.status(500).end(err);
-  }
-});
 
 app.use("/api", apiRoutes);
 app.use("/auth", authRoutes); // Add auth routes

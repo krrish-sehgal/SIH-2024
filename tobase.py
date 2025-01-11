@@ -7,7 +7,7 @@ def image_to_base64(image_path):
     return encoded_string
 
 # Example usage
-image_path = "/Users/Krrish/Desktop/krrish.jpeg"  # Replace with the path to your image
+image_path = "/Users/ANJANEYA/Desktop/sanat.jpeg"  # Replace with the path to your image
 base64_string = image_to_base64(image_path)
 print(base64_string)
 

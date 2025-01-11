@@ -81,7 +81,7 @@
 .verification-result button {
   margin-top: 10px;
   padding: 8px 16px;
-  background-color: #7AB2B2;
+  background-color: #19AAD7;
   color: white;
   border: none;
   border-radius: 4px;
@@ -89,7 +89,7 @@
 }
 
 .verification-result button:hover {
-  background-color:  #4D869C;
+  background-color:  #041759;
 }
 
 .real-face-timer {
@@ -151,7 +151,7 @@
 .retry-button {
   margin-top: 10px;
   padding: 10px 20px;
-  background-color: #7AB2B2;
+  background-color: #19AAD7;
   color: white;
   border: none;
   border-radius: 4px;
@@ -160,7 +160,7 @@
 }
 
 .retry-button:hover {
-  background-color: #4D869C;
+  background-color: #041759;
 }
 
 .auth-container {
@@ -178,4 +178,45 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.feedback-message {
+  padding: 10px 20px;
+  border-radius: 4px;
+  margin: 10px 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.feedback-message.too-bright {
+  background-color: #ffeb3b; /* Yellow */
+  color: #000;
+}
+
+.feedback-message.too-dark {
+  background-color: #3f51b5; /* Indigo */
+  color: #fff;
+}
+
+.feedback-message.no-face {
+  background-color: #f44336; /* Red */
+  color: #fff;
+}
+
+.feedback-message.alignment {
+  background-color: #ff9800; /* Orange */
+  color: #fff;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

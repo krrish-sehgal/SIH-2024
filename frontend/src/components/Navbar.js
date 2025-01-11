@@ -6,9 +6,9 @@ const Navbar = ({ step, totalSteps }) => {
   const { t } = useTranslation();
   const progressPercentage = (step / totalSteps) * 100;
 
-  const gradientStart = "#4D869C";
-  const gradientMiddle = "#7AB2B2";
-  const gradientEnd = "#CDE8E5";
+  const gradientStart = "#041759";
+  const gradientMiddle = "#19AAD7";
+  const gradientEnd = "#19AAD7";
 
   return (
     <div>
@@ -18,7 +18,7 @@ const Navbar = ({ step, totalSteps }) => {
           alignItems: "center",
           justifyContent: "space-between",
           backgroundColor: "white", // Light blue background
-          padding: "10px 20px",
+          padding: "8px 16px",  // Reduced padding
           position: "relative",
           borderBottom: "none",
         }}
@@ -27,7 +27,7 @@ const Navbar = ({ step, totalSteps }) => {
           <img
             src="emblem.png"
             alt="Government Emblem"
-            style={{ height: "10vh", marginRight: "10px" }}
+            style={{ height: "8vh", marginRight: "8px" }}  // Reduced height and margin
           />
           <div>
             <h1
@@ -54,17 +54,17 @@ const Navbar = ({ step, totalSteps }) => {
         <img
           src="aadhaar-logo.png"
           alt="Aadhaar Logo"
-          style={{ height: "10vh" }}
+          style={{ height: "8vh" }}  // Reduced height
         />
       </nav>
       <div
         style={{
           width: "100%",
-          height: "5px",
+          height: "10px",
           transition: "background 0.3s ease-in-out",
           background: `linear-gradient(to right, 
-          #4D869C ${progressPercentage}%,  
-          #CDE8E5 )`,
+          #041759 ${progressPercentage}%,  
+          #19AAD7 )`,
         }}
       ></div>
     </div>

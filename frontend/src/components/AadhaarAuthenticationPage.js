@@ -153,7 +153,7 @@ const AadhaarAuthenticationPage = (props) => {
             <div id="recaptcha-element" ref={recaptchaRef}></div>
           </div>
           {error && <div className="error-message">{error}</div>}
-          <button 
+          <button className="aadhaar-submit-button"
             onClick={handleAadhaarSubmit}
             disabled={isLoading || !isVerified}
           >
@@ -180,7 +180,7 @@ const AadhaarAuthenticationPage = (props) => {
             
           </div>
           {error && <div className="error-message">{`${error}`}</div>}
-          <button 
+          <button className="aadhaar-submit-button" 
             onClick={handleOtpSubmit}
             disabled={isLoading}
           >
