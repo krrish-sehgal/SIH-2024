@@ -1,45 +1,134 @@
-# PID: 1670
 
-## Problem Statement Title
+![SecureFace](https://socialify.git.ci/krrish-sehgal/SecureFace/image?description=1&forks=1&issues=1&name=1&owner=1&pulls=1&theme=Light)
 
-Develop a functional solution that incorporates the security of the ML model.
+# SecureFace
+SecureFace is a project developed for UIDAI, an organization under the Indian government that provides unique identification to residents of India. It demonstrates a method for deploying machine learning models for real-time face authentication within web browsers, focusing on security.
 
-## Description
+Its a secure solution for browser-based ML applications where models are transmitted and executed on the client side. Its architecture can be extended to other applications requiring secure communication between the server and client.
 
-### 1. Background
+For more info read my blog post [here](https://medium.com/@krrishsehgal03/how-we-secured-ml-models-for-real-time-authentication-on-browsers-3411ae40bc05).
 
-UIDAI is exploring possibilities to enable Face authentication on the desktop in a browser context.
+## ⚙️ Features
+- Browser Based Face Authentication
+- Spoof detection
+- Liveness detection
+- Secure model transmission
+- Tampering detection through digital signatures
 
-The proposed architecture to provide Face Authentication in the browser context requires AI on the edge to perform a liveness check of the face being captured by the webcam or connected camera.
+## Project Structure and How to Get Started
+## **Backend**
 
-UIDAI is considering the injection of an ML model by using an appropriate binary code delivery mechanism.
+### MERN API
+Handles fetching models from S3, encryption using DHKE, and serving the models to clients.
 
-The security of these models is important for transaction integrity and therefore seeks an innovative solution that will protect the model from any tampering and reverse engineering.
+**Steps to Run:**
+1. Navigate to the `mern-api` directory:
+```bash 
+cd backend/mern-api
+```
+2. Install dependencies:
+```bash
+npm install
+```
+3. Configure the environment variables by copying `.env.example` to `.env` and filling in the required details.
+4. Start the server:
+```bash
+node app.js
+```
+Runs on: [http://localhost:8000](http://localhost:8000)
 
-### 2. Problem Description
+### Flask API
+Handles face verification (i.e., verifying the user's face against the database).  
 
-As part of the challenge, participating teams are to demonstrate model security in a browser context by using either obfuscation or cryptography.
+**Steps to Run:**
+1. Configure the environment variables by copying `.env.example` to `.env` and filling in the required details.
+2. Install dependencies:
 
-Models are typically 5~7MB in size and structured as flatbuffers.
+```bash
+pip install -r requirements.txt
+```
+3. Start the server:
+```bash
+python main.py
+```
+Runs on: [http://localhost:5000](http://localhost:5000)
+---
 
-These models would be downloaded when first accessed on a desktop and then cached in the browser context.
+## Frontend
 
-For subsequent face authentication transactions, a cached model would be preferred unless the model has changed or been updated.
+**Steps to Run:**
+1. Navigate to the frontend directory.
+2. Install dependencies:
+```bash
+npm install
+```
+3. Start the server:
+```bash
+npm start
+```
+Runs on: [http://localhost:3000](http://localhost:3000)
 
-To solve the above problem statement, teams are free to choose either ONNX web runtime or Tensor.js or any other innovative model to distribute the model in the browser context.
+---
 
-#### Functional Objectives
+## Cloud Configurations
 
-1. **Model Security:** The solution must provide a mechanism to protect the model from any reverse engineering or tampering.
-2. **Model Size Optimization:** The solution must not significantly increase the size of the model post-implementation of security frameworks. Models are expected to be downloaded in 3G/4G/5G wireless networks, and any increase in size may lead to a deteriorated user experience.
-3. **Backend Components:** The solution must feature backend components to prepare the ML model either using obfuscation or cryptography. The backend activity can be a one-time task during the release of the ML models or a just-in-time approach. In the just-in-time approach, the model would be obfuscated or encrypted before being downloaded to the end user’s desktop.
+### S3 Setup
+1. Configure an S3 storage bucket.
+2. Enable KMS encryption on the bucket.
+3. Obtain the following keys and details:
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
+- `KMS_KEY_ID`
+- `S3_BUCKET_NAME`
 
-### 3. Expected Solution
+### GitHub CI/CD
+1. Update the `backend/model_versions.json` file to trigger a new deployment.
+2. Place the updated models in the `backend/s3-uploads` folder.
+3. The CI/CD pipeline will automatically upload the models to S3.
 
-The expected outcome of this project is a functional solution that incorporates the security of the ML model at the edge. The backend for the proposed solution system must be designed to handle the high volume of transactions expected for any population-scale solutions.
+---
 
-adhar-masking for encryption
-uidai for face detection api
-yolo for face dtection
+Now the project is ready to run!
 
-robo flow
+## 📸 Screenshots
+
+|||
+|:----------------------------------------:|:-----------------------------------------:|
+| ![Imgur](https://i.imgur.com/nn0mglY.png) | ![Imgur](https://i.imgur.com/ofUs0re.png) |
+| ![Imgur](https://i.imgur.com/JDlxUXk.png) | ![Imgur](https://i.imgur.com/TCgxsRR.png) |
+| ![Imgur](https://i.imgur.com/TCgxsRR.png) | ![Imgur](https://i.imgur.com/DAyPZCJ.png) |
+| ![Imgur](https://i.imgur.com/yl47zvk.png) | 
+
+# Built With 🛠
+
+- [NodeJS](https://nodejs.org/en/)  
+  Node.js is an open-source, cross-platform, back-end JavaScript runtime environment.  
+- [Express.js](https://expressjs.com/)  
+  A minimal and flexible Node.js web application framework.  
+- [MongoDB](https://www.mongodb.com/)  
+  MongoDB is a document-oriented NoSQL database for modern applications.  
+- [AWS](https://aws.amazon.com)  
+  - [AWS S3](https://aws.amazon.com/s3/)  
+    Amazon Simple Storage Service (Amazon S3) is an object storage service that offers scalability, data availability, security, and performance.  
+  - [AWS EC2](https://aws.amazon.com/ec2/)  
+    Amazon Elastic Compute Cloud (Amazon EC2) provides scalable computing capacity in the AWS cloud.  
+- [NGINX](https://nginx.org/en/)  
+  A high-performance web server, load balancer, and reverse proxy.  
+- [React.js](https://reactjs.org/)  
+  A JavaScript library for building user interfaces.  
+
+---
+
+## Techniques Used to Maintain Security 🔒
+
+1. **KMS Encryption**:  
+   Enabled at AWS S3 to secure stored models.  
+2. **DHKE with RSA Encryption**:  
+   Used for secure model transfer between the client and server.  
+3. **Digital Signature Verification**:  
+   Ensures tamper detection at the client side.  
+4. **Script Obfuscation**:  
+   Prevents reverse engineering and knowledge of model usage.  
+
+
