@@ -64,12 +64,12 @@ git switch frontend
 ```bash
 cd frontend
 ```
-2. Install dependencies:
+3. Install dependencies:
 ```bash
 npm install
 ```
-3. Configure the environment variables by copying .env.example to .env and filling in the required details.
-4. Start the server:
+4. Configure the environment variables by copying .env.example to .env and filling in the required details.
+5. Start the server:
 ```bash
 npm start
 ```
