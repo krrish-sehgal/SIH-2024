@@ -3,16 +3,17 @@ import React, { useEffect, useState ,useRef } from "react";
 
 function ModelService(props) {
   // State variables for managing keys, model data, and UI loading states
-  const [frontendPublicKey, setFrontendPublicKey] = useState(null); // Stores the public RSA key
-  const [encryptedModels, setEncryptedModels] = useState(null); // Encrypted ML model data
-  const [encryptedAesKey, setEncryptedAesKey] = useState(null); // Encrypted AES key
-  const [iv, setIv] = useState(null); // Initialization Vector for AES decryption
-  const [modelsLoaded, setModelsLoaded] = useState(false); // Flag to indicate model is loaded
-  const [decryptedModels, setDecryptedModels] = useState(null); // Buffer for decrypted model
-  const [signedHash, setSignedHash] = useState(null); // State for signed hash
+  const [frontendPublicKey, setFrontendPublicKey] = useState(null); 
+  const [encryptedModels, setEncryptedModels] = useState(null); 
+  const [encryptedAesKey, setEncryptedAesKey] = useState(null);
+  const [iv, setIv] = useState(null); 
+  const [modelsLoaded, setModelsLoaded] = useState(false); 
+  const [decryptedModels, setDecryptedModels] = useState(null); 
+  const [signedHash, setSignedHash] = useState(null); 
 const [keyGenerated, setKeyGenerated] = useState(false);
 const [isDecrypted, setIsDecrypted] = useState(false);
 const [forceUpdate, setForceUpdate] = useState(false);
+
   // Loading indicators for UI feedback during asynchronous operations
   const [isGeneratingKeys, setIsGeneratingKeys] = useState(false);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
@@ -53,7 +54,7 @@ const [forceUpdate, setForceUpdate] = useState(false);
 
         // Step 3: Export the public key to send it to the backend
         const exportedPublicKey = await window.crypto.subtle.exportKey(
-            "raw", // Export the raw public key for ECDH
+            "raw", 
             keyPair.publicKey
         );
 
@@ -70,9 +71,6 @@ const [forceUpdate, setForceUpdate] = useState(false);
     }
 };
 
-  
-
-  // Function to fetch the encrypted model from the backend using the public key
   const loadModel = async () => {
     setIsLoadingModel(true);
     try {
@@ -102,13 +100,13 @@ const verifyModels = async () => {
       console.log("All models verified successfully!");
       setIsVerified(true);
       props.setIsVerified(true);
-      props.setIsVerifying(false); // Ensure loading is removed
+      props.setIsVerifying(false);
       props.setReVerify(false);
       setIsVerified(false);
     } else {
       modelStatus.current = 0;
       console.log("Model verification failed, aborting decryption.");
-      props.setIsVerifying(false); // Also remove loading on failure
+      props.setIsVerifying(false); 
       props.setIsVerified(false);
       props.setReVerify(false);
       setModelsLoaded(false);
@@ -116,7 +114,7 @@ const verifyModels = async () => {
   } catch(error) {
     console.log("Error Verifying models:", error);
     modelStatus.current = 0;
-    props.setIsVerifying(false); // Remove loading on error
+    props.setIsVerifying(false); 
   }
 };
 
@@ -131,11 +129,11 @@ const verifyModels = async () => {
   
       // Step 2: Import the backend public key for ECDH key exchange
       const backendPublicKey = await window.crypto.subtle.importKey(
-        "raw", // Import the public key as raw bytes for ECDH
+        "raw", 
         backendPublicKeyBuffer,
-        { name: "ECDH", namedCurve: "P-256" }, // Specify the curve used
-        false, // The key is not extractable
-        [] // No specific usages, just for ECDH
+        { name: "ECDH", namedCurve: "P-256" }, 
+        false,
+        [] 
       );
   
       // Step 3: Derive the shared secret using the frontend private key and the backend public key
@@ -144,8 +142,8 @@ const verifyModels = async () => {
           name: "ECDH",
           public: backendPublicKey,
         },
-        frontendPrivateKey, // Use the frontend private key
-        256 // Length of the output in bits (to match AES key size)
+        frontendPrivateKey, 
+        256 
       );
   
       // Step 4: Export the shared secret as raw data
@@ -255,9 +253,9 @@ const verifyModels = async () => {
       });
       if (data.encryptedModels && data.backendPublicKey && data.iv && data.signedCombinedHash) {
         // Store the backend's public key for later use in DHKE
-        const backendPublicKeyBase64 = data.backendPublicKey; // Ensure the backend sends this public key
+        const backendPublicKeyBase64 = data.backendPublicKey; 
         storeSignedHash(data.signedCombinedHash);
-        storeBackendPublicKey(backendPublicKeyBase64); // Store the public key securely, e.g., in state
+        storeBackendPublicKey(backendPublicKeyBase64); 
         
         // Add small delay before updating state to ensure smooth transition
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -274,9 +272,7 @@ const verifyModels = async () => {
     }
   };
   
-  // Function to store the backend's public key in state (or IndexedDB)
   const storeBackendPublicKey = (publicKeyBase64) => {
-    // Assuming you are using state to store the backend's public key
     setBackendPublicKey(publicKeyBase64);
   };
 
@@ -533,7 +529,7 @@ const storeEncryptedData = async (models, aesKey, ivValue, signedHash) => {
     // Store AES key directly
     transaction.objectStore("aesKey").put({
       id: "currentKey",
-      key: aesKey  // Store CryptoKey object directly
+      key: aesKey 
     });
 
     // Store signed hash

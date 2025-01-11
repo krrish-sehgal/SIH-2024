@@ -1,15 +1,15 @@
 .update-form-container {
-  max-width: 550px;  /* Increased from 500px */
+  max-width: 550px;
   margin: 20px auto;
   padding: 15px;
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;  /* Add this to include padding in width calculation */
+  box-sizing: border-box;
 }
 
 .form-group {
-  margin-bottom: 6px;  /* Reduced from 8px */
+  margin-bottom: 6px;
 }
 
 .form-input {
@@ -17,16 +17,16 @@
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 15px;  /* Increased from 14px */
-  box-sizing: border-box;  /* Add this to include padding in width calculation */
-  height: 42px;  /* Increased from 36px */
+  font-size: 15px;
+  box-sizing: border-box;
+  height: 42px;
 }
 
 .form-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 6px;  /* Reduced from 8px */
-  width: 100%;  /* Add this to ensure row doesn't overflow */
+  margin-bottom: 6px;
+  width: 100%;
 }
 
 .form-row input {
@@ -34,10 +34,10 @@
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 15px;  /* Increased from 14px */
-  box-sizing: border-box;  /* Add this to include padding in width calculation */
-  min-width: 0;  /* Add this to allow flex items to shrink below content size */
-  height: 42px;  /* Increased from 36px */
+  font-size: 15px;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 42px;
 }
 
 .submit-button {
@@ -49,12 +49,12 @@
   border-radius: 4px;
   cursor: pointer;
   margin-top: 8px;
-  font-size: 15px;  /* Increased from 14px */
-  height: 42px;  /* Increased from 36px */
+  font-size: 15px;
+  height: 42px;
 }
 
 label {
   font-size: 14px;
   display: block;
-  margin-bottom: 2px;  /* Reduced from 3px */
+  margin-bottom: 2px;
 }

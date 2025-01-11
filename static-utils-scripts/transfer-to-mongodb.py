@@ -6,7 +6,7 @@ import datetime
 import cv2 
 
 # Connect to MongoDB
-client = MongoClient("mongodb://Krrish:krrish123@ac-7gvopvc-shard-00-00.1nxbntm.mongodb.net:27017,ac-7gvopvc-shard-00-01.1nxbntm.mongodb.net:27017,ac-7gvopvc-shard-00-02.1nxbntm.mongodb.net:27017/sih?replicaSet=atlas-11fue8-shard-0&ssl=true&authSource=admin&w=majority&appName=Cluster1")  # Change to your MongoDB URI if needed
+client = MongoClient("mongodb_cluster_id")  
 db = client.sih # Choose your database name
 collection = db.users # Choose your collection name
 

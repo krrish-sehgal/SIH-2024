@@ -30,7 +30,7 @@ const UpdateVerificationOverlay = ({ models, onSuccess, onClose }) => {
   useEffect(() => {
     if (liveness && detectionDone) {
       const timeoutId = setTimeout(() => {
-        navigate('/clone.html'); // Replace with your desired route
+        navigate('/clone.html'); 
       }, 2000);
   
       return () => clearTimeout(timeoutId);
