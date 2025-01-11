@@ -1,9 +1,8 @@
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 
-
 async function fetchDecryptedModelsFromS3(modelName, modelVersion) {
-  const bucketName = process.env.S3_BUCKET_NAME; // Ensure this is set in your environment
+  const bucketName = process.env.S3_BUCKET_NAME; 
 
   try {
     if (!modelVersion) {
@@ -20,26 +19,25 @@ async function fetchDecryptedModelsFromS3(modelName, modelVersion) {
     const modelFile = await s3.getObject(modelFileParams).promise();
 
     return {
-      modelFile: modelFile.Body, // The content of the model
+      modelFile: modelFile.Body, 
     };
   } catch (error) {
     console.error("Error fetching model from S3:", error);
-    throw error; // Rethrow the error for the caller to handle
+    throw error; 
   }
 }
 
 async function fetchPrivateKeyFromS3() {
-  const bucketName = process.env.S3_BUCKET_NAME; // Ensure this is set in your environment
+  const bucketName = process.env.S3_BUCKET_NAME; 
 
   try {
     const params = {
       Bucket: bucketName,
-      Key: "keys/private_key.pem", // Path to your private key in S3
+      Key: "keys/private_key.pem", 
     };
-
-    // Fetch the private key from S3
+    
     const data = await s3.getObject(params).promise();
-    return data.Body.toString("utf-8"); // Return the private key as a string
+    return data.Body.toString("utf-8"); 
   } catch (error) {
     console.error("Error fetching private key from S3:", error);
     throw error;

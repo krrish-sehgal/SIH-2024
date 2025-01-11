@@ -1,12 +1,11 @@
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
-const { fetchPrivateKeyFromS3 } = require("./s3utils");
+const { fetchPrivateKeyFromS3 } = require("./s3.utils");
 
 
 async function combineAndSign(hashes) {
   try {
-    //console.log(hashes);
     const combinedHash = crypto.createHash("sha256").update(Buffer.concat(hashes)).digest();
     console.log(`Combined hash: ${combinedHash.toString("hex")}`);
 

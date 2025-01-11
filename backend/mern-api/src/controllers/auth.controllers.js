@@ -1,25 +1,21 @@
-const User = require('../Models/user');
+const User = require('../models/user');
 const cookieParser = require('cookie-parser');
 exports.verifyOTP = async (req, res) => {
     try {
         const { aadhaarNumber, otp } = req.body;
         
-        // Find user and verify OTP
         console.log("Looking for aadhaar:", aadhaarNumber);
         console.log("With OTP:", otp);
-
-        const user = await User.findOne({ aadhaarNumber }); // No conversion needed
+        
+        const user = await User.findOne({ aadhaarNumber });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Direct number comparison
         if (!user.otp || user.otp !== otp) {
             return res.status(401).json({ message: "Invalid OTP" });
         }
 
-        // Create session
-      
         req.session.userId = user._id;
         req.session.aadhaarNumber = user.aadhaarNumber;
 

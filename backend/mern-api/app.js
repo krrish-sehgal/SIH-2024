@@ -1,27 +1,30 @@
 const express = require("express");
-const mongoose = require("mongoose"); // Add this line
+const mongoose = require("mongoose"); 
 const bodyParser = require("body-parser");
 const session = require('express-session');        
-const cors = require("cors"); // Import CORS
+const cors = require("cors"); 
 const MongoDBStore = require('connect-mongodb-session')(session);
 
-require("dotenv").config();
-const MONGODB_URI = process.env.MONGODB_URI; // Changed from MONGODB_URI to MONGO_DB_URI
-const SESSION_SECRET = process.env.SESSION_SECRET;
+const apiRoutes = require("./src/routes/api.routes.js");
+const authRoutes = require("./src/routes/auth.routes.js"); 
 
-// Add validation for MongoDB URI
+require("dotenv").config();
+
+const MONGODB_URI = process.env.MONGODB_URI;
+const SESSION_SECRET = process.env.SESSION_SECRET;
+const CORS_ORIGIN = process.env.CORS_ORIGIN;
+const APP_PORT = process.env.APP_PORT || 8000;
+
 if (!MONGODB_URI) {
     console.error('MONGO_DB_URI is not defined in .env file');
     process.exit(1);
 }
 
-// Validate required environment variables
 if (!SESSION_SECRET) {
     console.error('SESSION_SECRET is not defined in .env file');
     process.exit(1);
 }
 
-// MongoDB Connection with error handling
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log('Successfully connected to MongoDB.');
@@ -53,6 +56,7 @@ process.on('SIGINT', () => {
 });
 
 const app = express();
+
 const store = new MongoDBStore({
   uri :MONGODB_URI,                  
   collection :"sessions"               
@@ -61,12 +65,9 @@ const store = new MongoDBStore({
 store.on("error", (error) => {
   console.error("Session store error:", error);
 });
-const apiRoutes = require("./routes/api.js");
-const authRoutes = require("./routes/auth.js"); // Add this line
-const { Credentials } = require("aws-sdk");
 
 const corsOptions = {
-    origin: "http://localhost:3000",
+    origin: CORS_ORIGIN,
     credentials: true,                   
     methods: "GET,POST",              
     allowedHeaders: "Content-Type",   
@@ -74,7 +75,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions)); 
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json()); // Add support for JSON requests
+app.use(bodyParser.json()); 
 app.use(
   session({
     secret: SESSION_SECRET, 
@@ -90,8 +91,8 @@ app.use(
 );
 
 app.use("/api", apiRoutes);
-app.use("/auth", authRoutes); // Add auth routes
+app.use("/auth", authRoutes);
 
-app.listen(8000, () => {
-  console.log("Running on http://localhost:8000/");
+app.listen(APP_PORT, () => {
+  console.log(`Running on http://localhost:${APP_PORT}/`);
 });

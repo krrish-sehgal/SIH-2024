@@ -1,9 +1,7 @@
-// processModel.js
 const fs = require("fs/promises");
 const path = require("path");
-const { fetchDecryptedModelsFromS3 } = require("./s3utils");
-const { encryptModel } = require("./encryptionUtils");
-const { generateModelHash } = require("./hashUtils");
+const { fetchDecryptedModelsFromS3 } = require("./s3.utils");
+const { encryptModel } = require("./encryption.utils");
 
 async function processModel(modelName, modelVersion, aesKey, iv) {
   try {
@@ -11,8 +9,6 @@ async function processModel(modelName, modelVersion, aesKey, iv) {
     const { modelFile } = await fetchDecryptedModelsFromS3(modelName, modelVersion);
     console.log("modelFile", modelFile);
     const encryptedModel = encryptModel(modelFile, aesKey, iv);
-
-    //const modelHash = await generateModelHash(modelFile);
 
     return {
       modelName,
@@ -54,4 +50,5 @@ async function getEncryptedModelsAndHashes(modelVersions, aesKey, iv) {
     const versionsFilePath = path.resolve(__dirname, "../../model_versions.json");
     return JSON.parse(await fs.readFile(versionsFilePath, { encoding: "utf-8" }));
   }
+
 module.exports = { getEncryptedModelsAndHashes , fetchModelVersions};

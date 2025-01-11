@@ -1,5 +1,5 @@
-const { combineAndSign } = require("../utils/hashUtils.js");
-const { getEncryptedModelsAndHashes, fetchModelVersions } = require("../utils/processModel");
+const { combineAndSign } = require("../utils/hash.utils.js");
+const { getEncryptedModelsAndHashes, fetchModelVersions } = require("../utils/processModel.js");
 const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");

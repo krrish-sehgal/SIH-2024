@@ -11,6 +11,11 @@ import json
 import datetime
 import logging
 import traceback
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
@@ -21,7 +26,8 @@ app = Flask(__name__)
 CORS(app) 
 
 # MongoDB connection setup
-client = pymongo.MongoClient("mongodb://Krrish:krrish123@ac-7gvopvc-shard-00-00.1nxbntm.mongodb.net:27017,ac-7gvopvc-shard-00-01.1nxbntm.mongodb.net:27017,ac-7gvopvc-shard-00-02.1nxbntm.mongodb.net:27017/sih?replicaSet=atlas-11fue8-shard-0&ssl=true&authSource=admin&w=majority&appName=Cluster1")
+MONGODB_URI = os.getenv("MONGODB_URI")
+client = pymongo.MongoClient(MONGODB_URI)
 db = client.sih  
 collection = db.users  
 
