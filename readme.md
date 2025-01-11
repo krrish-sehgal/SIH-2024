@@ -61,7 +61,8 @@ python main.py
 ```bash
 npm install
 ```
-3. Start the server:
+3. Configure the environment variables by copying .env.example to .env and filling in the required details.
+4. Start the server:
 ```bash
 npm start
 ```
