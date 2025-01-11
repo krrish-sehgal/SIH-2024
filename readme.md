@@ -23,9 +23,9 @@ For more info read my blog post [here](https://medium.com/@krrishsehgal03/how-we
 Handles fetching models from S3, encryption using DHKE, serving the models to clients and the database(CIDR) operations.
 
 **Steps to Run:**
-1. Navigate to the `mern-api` directory:
+1. Navigate to the `model-serve-express-api` directory:
 ```bash 
-cd backend/mern-api
+cd model-serve-express-api
 ```
 2. Install dependencies:
 ```bash
@@ -41,13 +41,16 @@ node app.js
 Handles face verification (i.e., verifying the user's face against the database).  
 
 **Steps to Run:**
-1. Configure the environment variables by copying `.env.example` to `.env` and filling in the required details.
-2. Install dependencies:
-
+1. Navigate to the `face-verify-flask-api` directory:
+```bash
+cd face-verify-flask-api
+```
+2. Configure the environment variables by copying `.env.example` to `.env` and filling in the required details.
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
-3. Start the server:
+4. Start the server:
 ```bash
 python main.py
 ```
