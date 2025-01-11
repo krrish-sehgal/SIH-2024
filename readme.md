@@ -15,11 +15,12 @@ For more info read my blog post [here](https://medium.com/@krrishsehgal03/how-we
 - Secure model transmission
 - Tampering detection through digital signatures
 
-## Project Structure and How to Get Started
-## **Backend**
+---
 
-### MERN API
-Handles fetching models from S3, encryption using DHKE, and serving the models to clients.
+## Project Structure and How to Get Started
+
+### Backend/MERN API
+Handles fetching models from S3, encryption using DHKE, serving the models to clients and the database(CIDR) operations.
 
 **Steps to Run:**
 1. Navigate to the `mern-api` directory:
@@ -35,9 +36,8 @@ npm install
 ```bash
 node app.js
 ```
-Runs on: [http://localhost:8000](http://localhost:8000)
 
-### Flask API
+### Backend/Flask API
 Handles face verification (i.e., verifying the user's face against the database).  
 
 **Steps to Run:**
@@ -51,7 +51,6 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
-Runs on: [http://localhost:5000](http://localhost:5000)
 ---
 
 ## Frontend
@@ -66,7 +65,6 @@ npm install
 ```bash
 npm start
 ```
-Runs on: [http://localhost:3000](http://localhost:3000)
 
 ---
 
@@ -87,9 +85,9 @@ Runs on: [http://localhost:3000](http://localhost:3000)
 2. Place the updated models in the `backend/s3-uploads` folder.
 3. The CI/CD pipeline will automatically upload the models to S3.
 
----
-
 Now the project is ready to run!
+
+---
 
 ## 📸 Screenshots
 
