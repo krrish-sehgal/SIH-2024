@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app) 
 
 # MongoDB connection setup
 client = pymongo.MongoClient("mongodb://Krrish:krrish123@ac-7gvopvc-shard-00-00.1nxbntm.mongodb.net:27017,ac-7gvopvc-shard-00-01.1nxbntm.mongodb.net:27017,ac-7gvopvc-shard-00-02.1nxbntm.mongodb.net:27017/sih?replicaSet=atlas-11fue8-shard-0&ssl=true&authSource=admin&w=majority&appName=Cluster1")
-db = client.sih  # Replace with your database name
-collection = db.users  # Replace with your collection name
+db = client.sih  
+collection = db.users  
 
 # Utility function to decode base64 image to PIL image
 def decode_base64_to_image(base64_str):
@@ -139,12 +139,10 @@ def verify_face():
             # If the output is a list, access the first element
             if isinstance(uploaded_embedding, list):
                 uploaded_embedding = uploaded_embedding[0]
-            print("hello2")
             uploaded_vector = np.array(uploaded_embedding["embedding"]).reshape(1, -1)
 
             # Step 4: Calculate cosine similarity between the embeddings
             similarity = cosine_similarity(db_embedding, uploaded_vector)[0][0]
-            print("hello3")
             is_verified = bool(similarity > 0.7)
 
             # Only update if verified AND more than 6 months old
