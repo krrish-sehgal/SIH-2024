@@ -56,7 +56,14 @@ python main.py
 ## Frontend
 
 **Steps to Run:**
-1. Navigate to the frontend directory.
+1. Switch to frontend branch
+```bash
+git switch frontend
+```
+2. Navigate to the frontend directory.
+```bash
+cd frontend
+```
 2. Install dependencies:
 ```bash
 npm install
