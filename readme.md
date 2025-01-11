@@ -19,7 +19,7 @@ For more info read my blog post [here](https://medium.com/@krrishsehgal03/how-we
 
 ## Project Structure and How to Get Started
 
-### Backend/MERN API
+### Backend/Express API
 Handles fetching models from S3, encryption using DHKE, serving the models to clients and the database(CIDR) operations.
 
 **Steps to Run:**
