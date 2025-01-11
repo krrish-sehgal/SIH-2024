@@ -1,5 +1,5 @@
 
-![SecureFace](https://socialify.git.ci/krrish-sehgal/SecureFace/image?description=1&forks=1&issues=1&name=1&owner=1&pulls=1&theme=Light)
+![SecureFace](https://socialify.git.ci/krrish-sehgal/SecureFace/image?description=1&forks=1&issues=1&name=1&owner=1&pulls=1&theme=Auto)
 
 # SecureFace
 SecureFace is a project developed for UIDAI, an organization under the Indian government that provides unique identification to residents of India. It demonstrates a method for deploying machine learning models for real-time face authentication within web browsers, focusing on security.
