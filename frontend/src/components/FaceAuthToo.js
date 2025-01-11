@@ -41,8 +41,8 @@ const FaceAuthToo = (props) => {
 
       // Remove the data URI prefix if present
       const cleanImageData = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
-      console.log(cleanImageData)
-      const response = await fetch(process.env.REACT_APP_FACE_VERIFY_URL, {
+
+      const response = await fetch(process.env.REACT_APP_FACEVERIFYURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

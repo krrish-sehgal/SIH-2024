@@ -19,6 +19,7 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "mongoose": "^8.8.4",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "prom-client": "^15.1.3"
   }
 }
