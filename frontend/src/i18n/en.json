@@ -22,7 +22,8 @@
         "title": "Face Authentication Guidelines",
         "checkbox": "I have read and understood the guidelines.",
         "proceed": "Proceed",
-        "imagePath": "faceAuthGuidelines-en.jpeg"
+        "imagePath": "faceAuthGuidelines-en.jpeg",
+        "acceptRequired": "Please accept the guidelines before proceeding."
       },
       "capture": "Capture Image",
       "retry": "Try Again",
@@ -31,19 +32,26 @@
         "loading": "Loading models...",
         "ready": "Ready for face authentication",
         "real": "Real face detected",
-        "spoof": "Spoof detected"
+        "spoof": "Spoof detected",
+        "livenessCheckFailed": "Liveness Check Failed",
+        "verifying": "Verifying...",
+        "authSuccess": "Authorization Successful",
+        "authFailed": "Authorization Failed"
       },
-      "lightingPrompt": "Check Your Lighting, Ensure that your face isn't covered and is centered properly."
+      "lightingPrompt": "Check Your Lighting, Ensure that your face isn't covered and is centered properly.",
+      "camera": {
+        "enablePrompt": "Please enable camera access in your browser settings and refresh the page."
+      }
     },
     "endPage": {
       "thankyou": "Thank you for using Face Authentication Service"
     },
     "progressBar": {
       "steps": {
-        "aadhaar": "Aadhaar Verification",
-        "otp": "OTP Verification",
-        "face": "Face Authentication",
-        "complete": "Complete"
+        "aadhaar": "Language",
+        "otp": "Aadhar Number",
+        "face": "OTP Verification",
+        "complete": "Face Auth"
       }
     },
     "languageSwitcher": {

@@ -1,8 +1,10 @@
 /* global ort */
 import React, { useRef, useEffect, useState } from 'react';
 import Webcam from "react-webcam";
+import { useTranslation } from "react-i18next"; // Add this import
 
-export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageData }) => {
+export const FaceDetection = ({ models, setLiveness, setDetectionDone, setImageData }) => {
+  const { t } = useTranslation(); // Add translation hook
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const [output, setOutput] = useState("Initializing...");
@@ -72,21 +74,21 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
     const loadModels = async () => {
       try {
         console.log(models);
-        setOutput("Loading models...");
+        setOutput(t("faceAuth.status.loading"));
         const yoloBuffer = models[1].decryptedModel;
         const antispoofBuffer = models[0].decryptedModel;
         const yoloSession = await ort.InferenceSession.create(new Uint8Array(yoloBuffer));
         const antispoofSession = await ort.InferenceSession.create(new Uint8Array(antispoofBuffer));
         setYoloModel(yoloSession);
         setAntispoofModel(antispoofSession);
-        setOutput("Models loaded. Ready for face authentication.");
+        setOutput(t("faceAuth.status.ready"));
       } catch (error) {
         console.error("Error loading models:", error);
-        setOutput("Failed to load models. Check console for details.");
+        setOutput(t("faceAuth.status.error"));
       }
     };
     loadModels();
-  }, [models]);
+  }, [models, t]);
 
   useEffect(() => {
     if (yoloModel && antispoofModel && !verificationComplete) {
@@ -221,7 +223,7 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
         const antispoofResults = await antispoofModel.run(antispoofFeeds);
         const probability = sigmoid(antispoofResults.output.data[0]);
 
-        const newOutput = probability > 0.75 ? "Real face detected" : "Spoof detected";
+        const newOutput = probability > 0.75 ? t("faceAuth.status.real") : t("faceAuth.status.spoof");
        
         if (outputRef.current !== newOutput) {
           outputRef.current = newOutput;
@@ -295,7 +297,7 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
   return (
     <div className="auth-container">
       <div className="auth-column">
-        <h2>Face Authentication</h2>
+        <h2>{t("faceAuth.title")}</h2>
         <div className="status-row">
           {(timeLeft>=1) && (
             <div className="mini-timer">
@@ -330,7 +332,7 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
           />
           <img 
             className="overlay-circle" 
-            src={`face-${(output==="Models loaded. Ready for face authentication."||output==="Loading models...")?"mid":(output==="Real face detected"?"accepted":"rejected")}.png`} 
+            src={`face-${(output===t("faceAuth.status.ready")||output===t("faceAuth.status.loading"))?"mid":(output===t("faceAuth.status.real")?"accepted":"rejected")}.png`} 
             alt="Overlay" 
           />
         </div>
@@ -338,9 +340,9 @@ export const FaceDetection = ({ models, setLiveness, setDetectionDone ,setImageD
           <button 
             className={`capture-button disabled`}
             onClick={handleCapture}
-            disabled={output !== "Real face detected"}
+            disabled={output !== t("faceAuth.status.real")}
           >
-            Capture Image
+            {t("faceAuth.capture")}
           </button>
         )}
         

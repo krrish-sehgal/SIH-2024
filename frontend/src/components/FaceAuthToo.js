@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import "../styles/FaceAuthenticationPage.css";
-import ModelService from "./ModelService";
+import ModelService from "./ModelService.js";
 import Loading from "./Loading";
-import { FaceDetection } from "./FaceDetection"; // Change this import
-import FaceaAuthImage from "./faceAuthGuidelines.jpeg";
+import { FaceDetection } from "./FaceDetection";
 import NoFaceDetected from "./NoFaceDetected.js";
+import { useTranslation } from "react-i18next";
 
 const FaceAuthToo = (props) => {
+  const { t, i18n } = useTranslation(); // Add i18n
   const webcamRef = useRef(null);
   const [showAuthentication, setShowAuthentication] = useState(false);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
@@ -40,7 +41,7 @@ const FaceAuthToo = (props) => {
 
       // Remove the data URI prefix if present
       const cleanImageData = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
-
+      console.log(cleanImageData)
       const response = await fetch(process.env.REACT_APP_FACE_VERIFY_URL, {
         method: 'POST',
         headers: {
@@ -49,13 +50,14 @@ const FaceAuthToo = (props) => {
         body: JSON.stringify({
           aadhaarNumber: userData.aadhaarNumber,
           image: cleanImageData,
-          timestamp: new Date().toISOString()
+          timestamp :new Date().toISOString().slice(0, 23) + "+00:00"
         })
       });
       console.log(imageData);
   
       const data = await response.json();
-      return data.is_authorized;
+      console.log(data);
+      return data.is_verified;
       console.log("Data returned");
     } catch (error) {
       console.error( error);
@@ -78,12 +80,12 @@ const FaceAuthToo = (props) => {
   // Replace the existing handleProceed with this simplified version
   const handleProceed = () => {
     if (!guidelinesAccepted) {
-      alert("Please accept the guidelines before proceeding.");
+      alert(t("faceAuth.guidelines.acceptRequired"));
       return;
     }
     
     if (!cameraPermission) {
-      alert("Please enable camera access in your browser settings and refresh the page.");
+      alert(t("faceAuth.camera.enablePrompt"));
       return;
     }
     
@@ -119,10 +121,10 @@ const FaceAuthToo = (props) => {
       />
       {!showAuthentication ? (
         <div className="guidelines-box">
-          <h2>Face Authentication Guidelines</h2>
+          <h2>{t("faceAuth.guidelines.title")}</h2>
           <img
-            src={FaceaAuthImage}
-            alt="Face Authentication Guidelines"
+            src={`${process.env.PUBLIC_URL}/faceAuthGuidelines-${i18n.language}.jpeg`}
+            alt={t("faceAuth.guidelines.title")}
             className="guidelines-image"
           />
           <label>
@@ -131,9 +133,9 @@ const FaceAuthToo = (props) => {
               checked={guidelinesAccepted} className="guidelinesCheck"
               onChange={() => setGuidelinesAccepted(!guidelinesAccepted)}
             />
-            I have read and understood the guidelines.
+            {t("faceAuth.guidelines.checkbox")}
           </label>
-          <button onClick={handleProceed}>Proceed</button>
+          <button onClick={handleProceed}>{t("faceAuth.guidelines.proceed")}</button>
         </div>
       ) : !modelReady ? (
         <Loading/>
@@ -143,11 +145,11 @@ const FaceAuthToo = (props) => {
         ) : (
           <div className="auth-result">
             <h2>
-              {!liveness ? "Liveness Check Failed" :
-               !verificationComplete ? "Verifying..." :
-               faceVerified ? "Authorization Successful" : "Authorization Failed"}
+              {!liveness ? t("faceAuth.status.livenessCheckFailed") :
+               !verificationComplete ? t("faceAuth.status.verifying") :
+               faceVerified ? t("faceAuth.status.authSuccess") : t("faceAuth.status.authFailed")}
             </h2>
-            <p>{liveness &&faceVerified? "Live face detected" : <NoFaceDetected setDetectionDone={setDetectionDone}/>}</p>
+            <p>{liveness &&faceVerified? t("faceAuth.status.real") : <NoFaceDetected setVerificationComplete={setVerificationComplete} setDetectionDone={setDetectionDone}/>}</p>
           </div>
         )
         
