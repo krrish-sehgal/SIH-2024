@@ -56,13 +56,17 @@ python main.py
 ## Frontend
 
 **Steps to Run:**
-1. Navigate to the frontend directory.
-2. Install dependencies:
+1. Switch to frontend branch
+```bash
+git checkout frontend
+```
+2. Navigate to the frontend directory.
+3. Install dependencies:
 ```bash
 npm install
 ```
-3. Configure the environment variables by copying .env.example to .env and filling in the required details.
-4. Start the server:
+4. Configure the environment variables by copying .env.example to .env and filling in the required details.
+5. Start the server:
 ```bash
 npm start
 ```
