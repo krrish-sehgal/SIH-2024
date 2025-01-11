@@ -1,0 +1,194 @@
+.face-auth-page {
+  padding: 20px;
+}
+
+.guidelines-box {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;  /* Changed to center */
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;  /* Added */
+}
+
+.guidelines-image {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  margin: 20px auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: block;  /* Added */
+}
+
+.guidelines-box h2 {
+  margin-bottom: 20px;
+  width: 100%;
+  text-align: center;
+}
+
+.guidelines-box input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.guidelines-box ul {
+  list-style: disc;
+  padding-left: 20px;
+  margin-bottom: 16px;
+}
+
+.guidelines-box label {
+  display: flex;
+  align-items: center;
+  justify-content: center;  /* Added */
+  margin: 20px 0;
+  gap: 8px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.guidelines-box button {
+  padding: 10px 20px;
+  background-color: #7AB2B2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0 auto;  /* Added */
+  display: block;  /* Added */
+  min-width: 120px;  /* Added */
+}
+
+.guidelines-box button:hover {
+  background-color: #4D869C;
+}
+
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.auth-column {
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+}
+
+.webcam-overlay {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 20px auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: scaleX(-1);
+}
+
+.overlay-circle {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #7AB2B2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #4D869C;
+}
+
+button:disabled {
+  background-color: #d3d3d3; /* Light grey background */
+  color: #a0a0a0; /* Grey text */
+  cursor: not-allowed; /* Disabled cursor */
+  border: 1px solid #ccc; /* Light grey border */
+}
+
+button:disabled:hover {
+  background-color: #d3d3d3; /* Ensure hover state is also disabled */
+}
+
+.verification-form {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.verification-form input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.error-message {
+  color: #ff0000;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.success-message {
+  color: #008000;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .auth-container {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .webcam-overlay {
+    width: 90%;
+  }
+
+  .authentication-container,
+  .face-auth-container {
+    width: 90%;
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  h2 {
+    font-size: 18px;
+  }
+
+  input {
+    font-size: 14px;
+  }
+
+  button {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+}

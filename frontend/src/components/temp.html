@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time Face Detection & Anti-Spoofing</title>
+    <!-- Include ONNX Runtime Web -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.0/dist/ort.min.js"></script>
+    <!-- Link to external CSS if needed -->
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 20px;
+      }
+      #video {
+        border: 2px solid black;
+        margin-bottom: 10px;
+      }
+      #canvas {
+        display: none;
+      }
+      #output {
+        font-size: 18px;
+        color: red;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Real-Time Face Detection and Anti-Spoofing</h1>
+
+    <!-- Video Feed -->
+    <video id="video" width="640" height="480" autoplay muted></video>
+
+    <!-- Canvas for processing frames -->
+    <canvas id="canvas" width="640" height="480"></canvas>
+
+    <!-- Output message for anti-spoofing result -->
+    <p id="output">Initializing...</p>
+
+    <!-- Include your script (app.js) -->
+    <script src="temp.js"></script>
+  </body>
+</html>

@@ -1,0 +1,102 @@
+.progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 5vh 10px;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: 10%;
+    margin-right: 10%;
+}
+
+.step-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.step-container:last-child {
+  flex: 0;
+}
+
+.line {
+  height: 2px;
+  flex: 1;
+  margin: 0 10px;
+  background-color: #CDE8E5;
+}
+
+.line.completed {
+  background-color: #4D869C;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+
+.circle {
+  width: 10vh;
+  height: 10vh;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.pending {
+  background-color: #CDE8E5;
+}
+
+.completed {
+  background-color: #4D869C;
+}
+
+.active {
+  background-color: #7AB2B2;
+  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.3);
+}
+
+.step-title {
+  display: block;
+  font-size: 14px; /* Increased font size */
+  line-height: 1.2;
+  width: 100%;
+  text-align: center;
+  white-space: normal; /* Allow text to wrap */
+  word-wrap: break-word;
+  max-width: none; /* Remove max-width restriction */
+  overflow: visible; /* Show all text */
+}
+
+.step-title-container {
+  width: 150px; /* Increased width to show more text */
+  text-align: center;
+  margin-top: 10px; /* Add space between circle and text */
+}
+
+@media screen and (max-width: 768px) {
+  .circle {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .step-title {
+    font-size: 12px;
+  }
+
+  .line {
+    margin: 0 5px;
+  }
+
+  .step-title-container {
+    width: 100px;
+  }
+}

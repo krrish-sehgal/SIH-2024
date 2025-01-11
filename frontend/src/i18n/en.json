@@ -1,0 +1,62 @@
+{
+    "navbar": {
+      "title": "Unique Identification Authority of India",
+      "subtitle": "Government of India"
+    },
+    "aadhaar": {
+      "title": "Aadhaar Authentication",
+      "input": "Enter Aadhaar Number",
+      "submit": "Submit Aadhaar",
+      "verifying": "Verifying...",
+      "otpTitle": "OTP Verification",
+      "verifyOtp": "Verify OTP",
+      "error": {
+        "invalid": "Please enter a valid 12-digit Aadhaar number",
+        "captcha": "Please complete the reCAPTCHA verification",
+        "otp": "Please enter a valid 6-digit OTP"
+      }
+    },
+    "faceAuth": {
+      "title": "Face Authentication",
+      "guidelines": {
+        "title": "Face Authentication Guidelines",
+        "checkbox": "I have read and understood the guidelines.",
+        "proceed": "Proceed",
+        "imagePath": "faceAuthGuidelines-en.jpeg",
+        "acceptRequired": "Please accept the guidelines before proceeding."
+      },
+      "capture": "Capture Image",
+      "retry": "Try Again",
+      "status": {
+        "initializing": "Initializing...",
+        "loading": "Loading models...",
+        "ready": "Ready for face authentication",
+        "real": "Real face detected",
+        "spoof": "Spoof detected",
+        "livenessCheckFailed": "Liveness Check Failed",
+        "verifying": "Verifying...",
+        "authSuccess": "Authorization Successful",
+        "authFailed": "Authorization Failed"
+      },
+      "lightingPrompt": "Check Your Lighting, Ensure that your face isn't covered and is centered properly.",
+      "camera": {
+        "enablePrompt": "Please enable camera access in your browser settings and refresh the page."
+      }
+    },
+    "endPage": {
+      "thankyou": "Thank you for using Face Authentication Service"
+    },
+    "progressBar": {
+      "steps": {
+        "aadhaar": "Language",
+        "otp": "Aadhar Number",
+        "face": "OTP Verification",
+        "complete": "Face Auth"
+      }
+    },
+    "languageSwitcher": {
+        "title": "Select Your Preferred Language",
+        "description": "Please choose your preferred language to continue",
+        "continue": "Continue"
+    }
+  }
